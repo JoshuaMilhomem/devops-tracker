@@ -49,6 +49,7 @@ export function useDocumentPiP({ width = 300, height = 50 }: UseDocumentPiPOptio
   const openPiP = useCallback(async () => {
     if ('documentPictureInPicture' in window) {
       try {
+        //@ts-expect-error experimental API
         const win = await window.documentPictureInPicture.requestWindow({
           width,
           height,
