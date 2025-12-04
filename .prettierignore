@@ -1,0 +1,45 @@
+# Dependencies
+node_modules
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Build outputs
+dist
+build
+.next
+out
+.vite
+coverage
+
+# Generated files
+*.gen.ts
+*.gen.tsx
+routeTree.gen.ts
+
+# Cache
+.cache
+.eslintcache
+.prettierache
+
+# Logs
+*.log
+logs
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Misc
+public/mockServiceWorker.js
