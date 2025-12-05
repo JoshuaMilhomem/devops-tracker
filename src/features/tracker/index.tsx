@@ -16,7 +16,6 @@ import { useTaskManager } from '@/hooks/use-task-manager';
 import type { Task } from '@/types';
 
 import { EditTaskModal, LogEditorModal } from '../../components/shared/task-modals';
-import { ActiveTaskHero } from './components/active-task-hero';
 import { CreateTaskForm } from './components/create-task-form';
 import { TaskQueueItem } from './components/task-queue-item';
 
@@ -77,15 +76,6 @@ export default function TrackerView() {
     <div className="grid gap-8 lg:grid-cols-[350px_1fr]">
       <div className="space-y-6">
         <CreateTaskForm onCreate={createTask} />
-
-        {activeTask && (
-          <ActiveTaskHero
-            task={activeTask}
-            onEdit={setEditTask}
-            onPause={pauseTask}
-            onComplete={completeTask}
-          />
-        )}
       </div>
 
       <div className="space-y-4">
@@ -119,6 +109,7 @@ export default function TrackerView() {
             />
           ))}
         </div>
+        {activeTask && <div className="h-32 w-full" aria-hidden="true" />}
       </div>
 
       <Dialog open={!!conflictTask} onOpenChange={(open) => !open && setConflictTask(null)}>

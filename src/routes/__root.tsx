@@ -1,6 +1,7 @@
 import { Outlet, createRootRoute } from '@tanstack/react-router';
 
 import { AppHeader } from '@/components/layout/app-header';
+import { GlobalTaskOverlay } from '@/components/layout/global-task-overlay';
 import { AppStatusManager } from '@/components/shared/app-status-manager';
 import { NotFound } from '@/components/shared/not-found';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -15,7 +16,7 @@ export const Route = createRootRoute({
         <AppStatusManager />
 
         <AppHeader />
-
+        <GlobalTaskOverlay />
         <main className="container mx-auto max-w-5xl p-4 py-8 flex-1">
           <Outlet />
         </main>
