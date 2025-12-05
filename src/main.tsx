@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { RouterProvider, createRouter } from '@tanstack/react-router';
+import { Analytics } from '@vercel/analytics/react';
 import ReactDOM from 'react-dom/client';
 
 import './index.css';
@@ -17,5 +18,6 @@ declare module '@tanstack/react-router' {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <RouterProvider router={router} />
+    <Analytics />
   </React.StrictMode>
 );

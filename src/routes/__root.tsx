@@ -23,7 +23,6 @@ export const Route = createRootRoute({
         </main>
 
         <Toaster />
-        <Analytics />
       </div>
     </ThemeProvider>
   ),
