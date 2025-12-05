@@ -1,7 +1,9 @@
 import React from 'react';
 
 import { RouterProvider, createRouter } from '@tanstack/react-router';
+
 import { inject } from '@vercel/analytics';
+
 import ReactDOM from 'react-dom/client';
 
 import './index.css';
@@ -21,5 +23,5 @@ declare module '@tanstack/react-router' {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <RouterProvider router={router} />
-  </React.StrictMode>
+    </React.StrictMode>
 );
