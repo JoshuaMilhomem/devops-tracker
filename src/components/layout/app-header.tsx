@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { BarChart3, History, ListTodo } from 'lucide-react';
 
+import { Logo } from '@/assests/logo';
 import { ActiveTaskWidget } from '@/components/layout/active-task-widget';
 
 const NavLink = ({
@@ -22,12 +23,11 @@ const NavLink = ({
 
 export function AppHeader() {
   return (
-    <header className="border-b bg-background/95 sticky top-0 z-10 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="border-b bg-background/95 sticky top-0 z-10 p-4 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="container mx-auto max-w-5xl flex items-center gap-4">
         <Link to="/" className="flex items-center gap-2 group mr-auto">
-          <div className="w-8 h-8 rounded bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-900/20 group-hover:scale-105 transition-transform">
-            DT
-          </div>
+          <Logo className="size-8" />
+
           <h1 className="font-bold text-xl hidden sm:block group-hover:text-primary transition-colors">
             DevOps<span className="text-muted-foreground group-hover:text-primary/70">Tracker</span>
           </h1>

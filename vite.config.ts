@@ -18,28 +18,24 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'logo.svg'],
       devOptions: {
         enabled: true,
       },
       manifest: {
         name: 'DevOps Tracker',
         short_name: 'DOTracker',
-        description: 'Rastreamento de tempo e tarefas para engenheiros.',
-        theme_color: '#0f172a', // Cor do Slate 950
-        background_color: '#0f172a',
-        display: 'standalone', // Isso remove a barra do navegador!
+        description: 'Rastreamento de tempo e tarefas',
+        theme_color: '#020618',
+        background_color: '#020618',
+        display: 'standalone',
         orientation: 'portrait',
         icons: [
           {
-            src: 'pwa-192x192.png', // Vamos gerar este ícone dummy abaixo
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
+            src: 'logo.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'any maskable',
           },
         ],
       },
