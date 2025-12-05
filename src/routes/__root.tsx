@@ -1,5 +1,5 @@
 import { Outlet, createRootRoute } from '@tanstack/react-router';
-import { Analytics } from '@vercel/analytics/next';
+import { Analytics } from '@vercel/analytics/react';
 
 import { AppHeader } from '@/components/layout/app-header';
 import { GlobalTaskOverlay } from '@/components/layout/global-task-overlay';
