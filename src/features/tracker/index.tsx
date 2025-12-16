@@ -16,7 +16,6 @@ import { useTaskManager } from '@/hooks/use-task-manager';
 import type { Tag, Task } from '@/types';
 
 import { EditTaskModal, LogEditorModal } from '../../components/shared/task-modals';
-import { ActiveTaskHero } from './components/active-task-hero';
 import { CreateTaskForm } from './components/create-task-form';
 import { TaskQueueItem } from './components/task-queue-item';
 
@@ -40,11 +39,9 @@ export default function TrackerView() {
   const [conflictTask, setConflictTask] = useState<{ id: string; name: string } | null>(null);
   const [pendingStartId, setPendingStartId] = useState<string | null>(null);
   const [editTask, setEditTask] = useState<Task | null>(null);
+
   const [logTaskId, setLogTaskId] = useState<string | null>(null);
   const logTask = tasks.find((t) => t.id === logTaskId) || null;
-
-  const [viewedTaskId, setViewedTaskId] = useState<string | null>(null);
-  const viewedTask = tasks.find((t) => t.id === viewedTaskId) || null;
 
   const availableTags = useMemo(() => {
     const tagsMap = new Map<string, Tag>();
@@ -70,7 +67,6 @@ export default function TrackerView() {
       setPendingStartId(id);
     } else {
       startTask(id);
-      setViewedTaskId(id);
     }
   };
 
@@ -80,25 +76,18 @@ export default function TrackerView() {
       else completeTask(conflictTask.id);
 
       startTask(pendingStartId);
-      setViewedTaskId(pendingStartId);
 
       setConflictTask(null);
       setPendingStartId(null);
     }
   };
 
-  const pendingTasks = tasks.filter((t) => t.status !== 'completed' && t.id !== viewedTaskId);
-  const handleHeroClose = () => setViewedTaskId(null);
-
-  const handleHeroComplete = (id: string) => {
-    completeTask(id);
-    setViewedTaskId(null);
-  };
+  const activeTask = tasks.find((t) => t.status === 'running');
+  const pendingTasks = tasks.filter((t) => t.status !== 'completed');
 
   return (
     <div className="grid gap-8 lg:grid-cols-[350px_1fr]">
       <div className="space-y-6">
-        {/* [CHANGED] Passamos availableTags para o form */}
         <CreateTaskForm onCreate={createTask} availableTags={availableTags} />
       </div>
 
@@ -112,7 +101,7 @@ export default function TrackerView() {
           </Badge>
         </div>
 
-        {pendingTasks.length === 0 && !viewedTask && (
+        {pendingTasks.length === 0 && !activeTask && (
           <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-slate-800 rounded-xl text-slate-500 bg-slate-900/30">
             <StopCircle size={48} className="mb-4 opacity-20" />
             <p className="font-medium">Sua fila está vazia</p>
@@ -134,19 +123,11 @@ export default function TrackerView() {
           ))}
         </div>
 
-        {viewedTask && (
-          <>
-            <div className="h-32 w-full" aria-hidden="true" />
-            <ActiveTaskHero
-              task={viewedTask}
-              onEdit={setEditTask}
-              onPause={pauseTask}
-              onResume={startTask}
-              onComplete={handleHeroComplete}
-              onClose={handleHeroClose}
-            />
-          </>
-        )}
+        {/* [REMOVIDO] Bloco do ActiveTaskHero foi deletado inteiramente daqui */}
+        {/* Ele agora vive exclusivamente no GlobalTaskOverlay */}
+
+        {/* Spacer opcional para garantir scroll se o Hero Global for fixo no bottom */}
+        {activeTask && <div className="h-32 w-full" aria-hidden="true" />}
       </div>
 
       <Dialog open={!!conflictTask} onOpenChange={(open) => !open && setConflictTask(null)}>
