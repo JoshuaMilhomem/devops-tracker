@@ -13,20 +13,29 @@ interface ActiveTaskHeroProps {
   task: Task;
   onEdit: (task: Task) => void;
   onPause: (id: string) => void;
+  onResume: (id: string) => void;
   onComplete: (id: string) => void;
+  onClose: () => void;
 }
 
-export function ActiveTaskHero({ task, onEdit, onPause, onComplete }: ActiveTaskHeroProps) {
-  const [isMinimized, setIsMinimized] = useState(false);
+export function ActiveTaskHero({
+  task,
+  onEdit,
+  onPause,
+  onResume,
+  onComplete,
+  onClose,
+}: ActiveTaskHeroProps) {
+  const [manualMinimized, setManualMinimized] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [pipIsCompact, setPipIsCompact] = useState(false);
   const [, setTick] = useState(0);
 
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 640;
       setIsMobile(mobile);
-
-      if (mobile) setIsMinimized(true);
+      if (mobile) setManualMinimized(true);
     };
 
     checkMobile();
@@ -37,8 +46,8 @@ export function ActiveTaskHero({ task, onEdit, onPause, onComplete }: ActiveTask
   const { ref, position, handleMouseDown, isDragging } = useDraggable(24, 24);
 
   const { pipWindow, openPiP, closePiP } = useDocumentPiP({
-    width: isMinimized ? 300 : 400,
-    height: isMinimized ? 100 : 400,
+    width: manualMinimized ? 300 : 400,
+    height: manualMinimized ? 120 : 400,
   });
 
   useEffect(() => {
@@ -46,30 +55,45 @@ export function ActiveTaskHero({ task, onEdit, onPause, onComplete }: ActiveTask
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (!pipWindow) return;
+    const handlePipResize = () => {
+      const isSmall = pipWindow.innerHeight < 250;
+      setPipIsCompact(isSmall);
+    };
+    handlePipResize();
+    pipWindow.addEventListener('resize', handlePipResize);
+    return () => pipWindow.removeEventListener('resize', handlePipResize);
+  }, [pipWindow]);
+
   const elapsed = calculateTotalMs(task.intervals);
 
   useEffect(() => {
     if (!task && pipWindow) closePiP();
   }, [task, pipWindow, closePiP]);
 
+  const effectiveIsMinimized = pipWindow ? pipIsCompact : isMobile ? true : manualMinimized;
+
   const contentProps: HeroContentProps = {
     task,
     elapsed,
-
-    isMinimized: isMobile ? true : isMinimized,
-
+    isMinimized: effectiveIsMinimized,
     disableMaximize: isMobile,
     onPause,
+    onResume,
     onComplete,
     onEdit,
-    onToggleMinimize: () => setIsMinimized(!isMinimized),
+    onClose,
+    onToggleMinimize: () => {
+      if (!pipWindow) setManualMinimized(!manualMinimized);
+    },
     onTogglePip: () => (pipWindow ? closePiP() : openPiP()),
   };
 
   if (pipWindow) {
     return createPortal(
-      <div className="h-full w-full flex items-center justify-center p-4 bg-slate-950">
-        <HeroContent {...contentProps} inPip={true} />
+      <div className="h-full w-full flex flex-col bg-slate-950 overflow-hidden">
+        <HeroContent {...contentProps} inPip={true} disableMaximize={pipIsCompact} />
       </div>,
       pipWindow.document.body
     );
@@ -77,7 +101,6 @@ export function ActiveTaskHero({ task, onEdit, onPause, onComplete }: ActiveTask
 
   const mobileStyle: React.CSSProperties = {
     position: 'fixed',
-
     bottom: 'calc(1rem + env(safe-area-inset-bottom, 10px))',
     left: '1rem',
     right: '1rem',
@@ -90,11 +113,12 @@ export function ActiveTaskHero({ task, onEdit, onPause, onComplete }: ActiveTask
     left: position.x,
     top: position.y,
     zIndex: 100,
-    width: isMinimized ? 'auto' : '100%',
+    width: manualMinimized ? 'auto' : '100%',
     maxWidth: '400px',
     touchAction: 'none',
     transition: isDragging ? 'none' : 'width 0.3s ease',
   };
+
   return (
     <div
       ref={!isMobile ? ref : undefined}

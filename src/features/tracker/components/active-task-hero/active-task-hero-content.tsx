@@ -6,7 +6,9 @@ import {
   Pause,
   Pencil,
   PictureInPicture,
+  Play,
   X,
+  XCircle,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -21,7 +23,9 @@ export interface HeroContentProps {
   inPip?: boolean;
   disableMaximize?: boolean;
   onPause: (id: string) => void;
+  onResume: (id: string) => void;
   onComplete: (id: string) => void;
+  onClose: () => void;
   onEdit: (task: Task) => void;
   onToggleMinimize: () => void;
   onTogglePip: () => void;
@@ -35,16 +39,19 @@ export function HeroContent({
   inPip = false,
   disableMaximize = false,
   onPause,
+  onResume,
   onComplete,
+  onClose,
   onEdit,
   onToggleMinimize,
   onTogglePip,
   dragHandleProps,
 }: HeroContentProps) {
-  let containerClasses = '';
+  const isRunning = task.status === 'running';
 
+  let containerClasses = '';
   if (inPip) {
-    containerClasses = 'w-full h-full flex flex-col bg-slate-950 border-0';
+    containerClasses = 'w-full h-full bg-slate-950 border-0';
   } else if (disableMaximize) {
     containerClasses =
       'w-full bg-slate-900 border-t border-slate-800 rounded shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]';
@@ -55,7 +62,9 @@ export function HeroContent({
 
   if (isMinimized) {
     return (
-      <div className={`${containerClasses} p-3 flex items-center justify-between gap-3`}>
+      <div
+        className={`${containerClasses} flex items-center justify-between gap-3 ${inPip ? 'px-4' : 'p-3'}`}
+      >
         <div className="flex items-center gap-3 overflow-hidden min-w-0">
           {!inPip && !disableMaximize && dragHandleProps && (
             <div
@@ -66,34 +75,70 @@ export function HeroContent({
             </div>
           )}
 
-          <div className="flex flex-col min-w-0">
-            <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+          <div className="flex flex-col min-w-0 justify-center">
+            <span
+              className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap ${isRunning ? 'text-blue-400' : 'text-yellow-500'}`}
+            >
               <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-blue-500"></span>
+                {isRunning && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                )}
+                <span
+                  className={`relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 ${isRunning ? 'bg-blue-500' : 'bg-yellow-500'}`}
+                ></span>
               </span>
-              Running
+              {isRunning ? 'Running' : 'Paused'}
             </span>
-            <span className="font-mono text-xl font-bold text-white leading-none mt-0.5 truncate">
+            <span
+              className={`font-mono font-bold text-white leading-none mt-0.5 truncate ${inPip ? 'text-3xl' : 'text-xl'}`}
+            >
               {formatTime(elapsed)}
             </span>
           </div>
 
-          {disableMaximize && (
+          {(disableMaximize || (inPip && !isMinimized)) && (
             <span className="text-xs text-slate-400 truncate hidden xs:block">{task.name}</span>
           )}
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-9 w-9 hover:bg-white/10 text-slate-300 hover:text-white"
-            onClick={() => onPause(task.id)}
-            title="Pausar"
-          >
-            <Pause size={18} />
-          </Button>
+          {/* LÓGICA DE BOTÕES MINIMIZADOS */}
+          {isRunning ? (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-9 w-9 hover:bg-white/10 text-slate-300 hover:text-white"
+              onClick={() => onPause(task.id)}
+              title="Pausar"
+            >
+              <Pause size={18} />
+            </Button>
+          ) : (
+            <>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-9 w-9 hover:bg-blue-500/20 text-blue-500 hover:text-blue-400"
+                onClick={() => onResume(task.id)}
+                title="Retomar"
+              >
+                <Play size={18} className="ml-0.5" />
+              </Button>
+
+              {/* Botão Fechar só aparece se pausado */}
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-9 w-9 hover:bg-red-500/20 text-slate-500 hover:text-red-400"
+                onClick={onClose}
+                title="Fechar Card"
+              >
+                <X size={18} />
+              </Button>
+            </>
+          )}
+
+          {/* O botão concluir sempre disponível */}
           <Button
             size="icon"
             variant="ghost"
@@ -121,16 +166,18 @@ export function HeroContent({
   }
 
   return (
-    <Card className={containerClasses}>
+    <Card className={`${containerClasses} ${inPip ? 'flex flex-col' : ''}`}>
       <div
         className={`flex items-center justify-between px-3 py-2 sm:px-4 border-b border-white/5 bg-white/5 select-none shrink-0 ${
           !inPip ? 'cursor-move' : ''
         }`}
         {...(!inPip ? dragHandleProps : {})}
       >
-        <div className="flex items-center gap-2 text-blue-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider">
+        <div
+          className={`flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider ${isRunning ? 'text-blue-400' : 'text-yellow-500'}`}
+        >
           {!inPip && <GripHorizontal size={14} className="opacity-50" />}
-          <span>Em Execução</span>
+          <span>{isRunning ? 'Em Execução' : 'Pausado'}</span>
         </div>
 
         <div className="flex items-center gap-1">
@@ -143,6 +190,7 @@ export function HeroContent({
           >
             {inPip ? <X size={14} /> : <PictureInPicture size={14} />}
           </Button>
+
           {!inPip && (
             <Button
               size="icon"
@@ -164,17 +212,36 @@ export function HeroContent({
               {task.name}
             </h2>
           </div>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="shrink-0 text-slate-400 hover:text-white hover:bg-white/10 h-7 w-7 sm:h-9 sm:w-9"
-            onClick={() => onEdit(task)}
-          >
-            <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          </Button>
+
+          <div className="flex gap-1">
+            {/* Se estiver pausado, mostra botão fechar no topo também */}
+            {!isRunning && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="shrink-0 text-slate-500 hover:text-red-400 hover:bg-red-500/10 h-7 w-7 sm:h-9 sm:w-9"
+                onClick={onClose}
+                title="Fechar Card"
+              >
+                <XCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Button>
+            )}
+
+            <Button
+              size="icon"
+              variant="ghost"
+              className="shrink-0 text-slate-400 hover:text-white hover:bg-white/10 h-7 w-7 sm:h-9 sm:w-9"
+              onClick={() => onEdit(task)}
+            >
+              <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            </Button>
+          </div>
         </div>
+
         <div className="py-1 sm:py-2 flex-1 flex flex-col justify-center text-center sm:text-left">
-          <div className="font-mono text-4xl sm:text-5xl font-light text-white tracking-tight tabular-nums transition-all duration-300">
+          <div
+            className={`font-mono text-4xl sm:text-5xl font-light tracking-tight tabular-nums transition-all duration-300 ${isRunning ? 'text-white' : 'text-slate-400'}`}
+          >
             {formatTime(elapsed)}
           </div>
           <div className="text-xs sm:text-sm text-slate-400 font-mono mt-1">
@@ -182,14 +249,26 @@ export function HeroContent({
             Units
           </div>
         </div>
+
         <div className="grid grid-cols-2 gap-2 sm:gap-3 mt-auto shrink-0">
-          <Button
-            variant="outline"
-            className="border-slate-700 bg-transparent text-slate-200 hover:bg-slate-800 hover:text-white h-9 sm:h-11 text-xs sm:text-sm"
-            onClick={() => onPause(task.id)}
-          >
-            <Pause className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Pausar
-          </Button>
+          {isRunning ? (
+            <Button
+              variant="outline"
+              className="border-slate-700 bg-transparent text-slate-200 hover:bg-slate-800 hover:text-white h-9 sm:h-11 text-xs sm:text-sm"
+              onClick={() => onPause(task.id)}
+            >
+              <Pause className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Pausar
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              className="border-slate-700 bg-transparent text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 h-9 sm:h-11 text-xs sm:text-sm border-blue-500/30"
+              onClick={() => onResume(task.id)}
+            >
+              <Play className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Retomar
+            </Button>
+          )}
+
           <Button
             className="bg-green-600 hover:bg-green-700 text-white border-0 h-9 sm:h-11 text-xs sm:text-sm shadow-lg shadow-green-900/20"
             onClick={() => onComplete(task.id)}

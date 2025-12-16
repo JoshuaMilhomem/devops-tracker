@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { CheckCircle2, Pause, StopCircle } from 'lucide-react';
 
@@ -13,9 +13,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useTaskManager } from '@/hooks/use-task-manager';
-import type { Task } from '@/types';
+import type { Tag, Task } from '@/types';
 
 import { EditTaskModal, LogEditorModal } from '../../components/shared/task-modals';
+import { ActiveTaskHero } from './components/active-task-hero';
 import { CreateTaskForm } from './components/create-task-form';
 import { TaskQueueItem } from './components/task-queue-item';
 
@@ -40,8 +41,22 @@ export default function TrackerView() {
   const [pendingStartId, setPendingStartId] = useState<string | null>(null);
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [logTaskId, setLogTaskId] = useState<string | null>(null);
-
   const logTask = tasks.find((t) => t.id === logTaskId) || null;
+
+  const [viewedTaskId, setViewedTaskId] = useState<string | null>(null);
+  const viewedTask = tasks.find((t) => t.id === viewedTaskId) || null;
+
+  const availableTags = useMemo(() => {
+    const tagsMap = new Map<string, Tag>();
+    tasks.forEach((t) => {
+      t.tags?.forEach((tag) => {
+        if (!tagsMap.has(tag.label)) {
+          tagsMap.set(tag.label, tag);
+        }
+      });
+    });
+    return Array.from(tagsMap.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [tasks]);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
@@ -55,6 +70,7 @@ export default function TrackerView() {
       setPendingStartId(id);
     } else {
       startTask(id);
+      setViewedTaskId(id);
     }
   };
 
@@ -64,18 +80,26 @@ export default function TrackerView() {
       else completeTask(conflictTask.id);
 
       startTask(pendingStartId);
+      setViewedTaskId(pendingStartId);
+
       setConflictTask(null);
       setPendingStartId(null);
     }
   };
 
-  const activeTask = tasks.find((t) => t.status === 'running');
-  const pendingTasks = tasks.filter((t) => t.status !== 'completed' && t.id !== activeTask?.id);
+  const pendingTasks = tasks.filter((t) => t.status !== 'completed' && t.id !== viewedTaskId);
+  const handleHeroClose = () => setViewedTaskId(null);
+
+  const handleHeroComplete = (id: string) => {
+    completeTask(id);
+    setViewedTaskId(null);
+  };
 
   return (
     <div className="grid gap-8 lg:grid-cols-[350px_1fr]">
       <div className="space-y-6">
-        <CreateTaskForm onCreate={createTask} />
+        {/* [CHANGED] Passamos availableTags para o form */}
+        <CreateTaskForm onCreate={createTask} availableTags={availableTags} />
       </div>
 
       <div className="space-y-4">
@@ -88,7 +112,7 @@ export default function TrackerView() {
           </Badge>
         </div>
 
-        {pendingTasks.length === 0 && !activeTask && (
+        {pendingTasks.length === 0 && !viewedTask && (
           <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-slate-800 rounded-xl text-slate-500 bg-slate-900/30">
             <StopCircle size={48} className="mb-4 opacity-20" />
             <p className="font-medium">Sua fila está vazia</p>
@@ -109,7 +133,20 @@ export default function TrackerView() {
             />
           ))}
         </div>
-        {activeTask && <div className="h-32 w-full" aria-hidden="true" />}
+
+        {viewedTask && (
+          <>
+            <div className="h-32 w-full" aria-hidden="true" />
+            <ActiveTaskHero
+              task={viewedTask}
+              onEdit={setEditTask}
+              onPause={pauseTask}
+              onResume={startTask}
+              onComplete={handleHeroComplete}
+              onClose={handleHeroClose}
+            />
+          </>
+        )}
       </div>
 
       <Dialog open={!!conflictTask} onOpenChange={(open) => !open && setConflictTask(null)}>
@@ -149,6 +186,7 @@ export default function TrackerView() {
           setEditTask(null);
         }}
       />
+
       <LogEditorModal
         task={logTask}
         onClose={() => setLogTaskId(null)}
