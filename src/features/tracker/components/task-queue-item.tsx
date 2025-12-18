@@ -4,7 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { calculateTotalMs, calculateWorkUnits, formatTime } from '@/lib/time-utils';
+import {
+  calculateStoryPoints,
+  calculateTotalMs,
+  calculateWorkUnits,
+  formatTime,
+} from '@/lib/time-utils';
 import type { Task } from '@/types';
 
 interface TaskQueueItemProps {
@@ -25,13 +30,14 @@ export function TaskQueueItem({
   onComplete,
 }: TaskQueueItemProps) {
   const totalMs = calculateTotalMs(task.intervals);
+  const dynamicSp = calculateStoryPoints(totalMs);
   const hasSessions = task.intervals.length > 0;
 
   return (
     <Card className="group border-slate-800 bg-slate-900/40 hover:bg-slate-900 hover:border-slate-700 transition-all duration-200">
-      <CardContent className="p-4 flex items-center justify-between gap-4">
+      <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
             <h3 className="font-semibold text-slate-200 truncate text-base">{task.name}</h3>
             {task.tags?.map((tag) => (
               <Badge
@@ -49,12 +55,12 @@ export function TaskQueueItem({
                 Pausada
               </Badge>
             )}
-            {task.storyPoints > 0 && (
+            {dynamicSp > 0 && (
               <Badge
                 variant="secondary"
-                className="bg-slate-800 text-slate-400 text-[10px] h-5 px-1.5"
+                className="bg-purple-500/10 text-purple-400 border-purple-500/20 text-[10px] h-5 px-1.5"
               >
-                {task.storyPoints} SP
+                {dynamicSp} SP
               </Badge>
             )}
           </div>
@@ -66,7 +72,7 @@ export function TaskQueueItem({
           </div>
         </div>
 
-        <div className="flex gap-2 shrink-0">
+        <div className="flex gap-2 shrink-0 self-end sm:self-center w-full sm:w-auto justify-end sm:justify-start mt-2 sm:mt-0">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>

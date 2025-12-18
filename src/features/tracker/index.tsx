@@ -86,23 +86,28 @@ export default function TrackerView() {
   const pendingTasks = tasks.filter((t) => t.status !== 'completed');
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[350px_1fr]">
-      <div className="space-y-6">
+    <div className="grid gap-6 lg:gap-8 lg:grid-cols-[350px_1fr] w-full max-w-[100vw] overflow-x-hidden pb-20 lg:pb-0">
+      {/* Coluna 1: Formulário */}
+      <div className="space-y-6 w-full">
         <CreateTaskForm onCreate={createTask} availableTags={availableTags} />
       </div>
 
-      <div className="space-y-4">
+      {/* Coluna 2: Lista */}
+      {/* [FIX] Adicionado 'min-w-0' aqui. Isso é crucial em CSS Grid/Flex. 
+          Sem isso, se o conteúdo interno for largo, ele empurra o grid. 
+          Com min-w-0, ele força o conteúdo a respeitar o truncate. */}
+      <div className="space-y-4 w-full min-w-0">
         <div className="flex items-center justify-between pb-2 border-b border-slate-800">
           <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
             Fila de Tarefas
           </h2>
-          <Badge variant="secondary" className="bg-slate-800 text-slate-300">
+          <Badge variant="secondary" className="bg-slate-800 text-slate-300 shrink-0">
             {pendingTasks.length} Pendentes
           </Badge>
         </div>
 
         {pendingTasks.length === 0 && !activeTask && (
-          <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-slate-800 rounded-xl text-slate-500 bg-slate-900/30">
+          <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-slate-800 rounded-xl text-slate-500 bg-slate-900/30 text-center px-4">
             <StopCircle size={48} className="mb-4 opacity-20" />
             <p className="font-medium">Sua fila está vazia</p>
             <p className="text-sm">Adicione uma nova tarefa para começar.</p>
@@ -123,35 +128,33 @@ export default function TrackerView() {
           ))}
         </div>
 
-        {/* [REMOVIDO] Bloco do ActiveTaskHero foi deletado inteiramente daqui */}
-        {/* Ele agora vive exclusivamente no GlobalTaskOverlay */}
-
-        {/* Spacer opcional para garantir scroll se o Hero Global for fixo no bottom */}
+        {/* Spacer para garantir scroll se o Hero Global for fixo no bottom */}
         {activeTask && <div className="h-32 w-full" aria-hidden="true" />}
       </div>
 
       <Dialog open={!!conflictTask} onOpenChange={(open) => !open && setConflictTask(null)}>
-        <DialogContent className="bg-slate-900 border-slate-800 text-slate-200">
+        <DialogContent className="bg-slate-900 border-slate-800 text-slate-200 sm:max-w-[425px] w-[95vw]">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
-              <StopCircle className="text-yellow-500" size={20} /> Tarefa em Andamento
+              <StopCircle className="text-yellow-500 shrink-0" size={20} />
+              <span className="truncate">Tarefa em Andamento</span>
             </DialogTitle>
             <DialogDescription className="text-slate-400 pt-2">
               A tarefa <span className="text-white font-medium">"{conflictTask?.name}"</span> ainda
               está a ser cronometrada.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-4">
             <Button
               variant="outline"
               onClick={() => resolveConflict('pause')}
-              className="border-slate-700 hover:bg-slate-800 text-slate-300"
+              className="border-slate-700 hover:bg-slate-800 text-slate-300 w-full sm:w-auto"
             >
               <Pause className="mr-2 h-4 w-4" /> Pausar Anterior
             </Button>
             <Button
               onClick={() => resolveConflict('complete')}
-              className="bg-blue-600 hover:bg-blue-700 text-white border-0"
+              className="bg-blue-600 hover:bg-blue-700 text-white border-0 w-full sm:w-auto"
             >
               <CheckCircle2 className="mr-2 h-4 w-4" /> Concluir Anterior
             </Button>
@@ -162,6 +165,7 @@ export default function TrackerView() {
       <EditTaskModal
         task={editTask}
         onClose={() => setEditTask(null)}
+        availableTags={availableTags}
         onSave={(updated) => {
           updateTaskDetails(updated);
           setEditTask(null);

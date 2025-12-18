@@ -16,7 +16,6 @@ export interface Task {
   id: string;
   name: string;
   description?: string;
-  storyPoints: number;
   tags: Tag[];
   status: TaskStatus;
   intervals: TimeInterval[];

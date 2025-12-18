@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { calculateWorkUnits } from '@/lib/time-utils';
+import { calculateStoryPoints, calculateWorkUnits } from '@/lib/time-utils';
 import type { Task } from '@/types';
 
 export type DashboardFilter = 'day' | 'sprint' | 'month';
@@ -98,11 +98,10 @@ export function useDashboardStats(
       (acc, curr) => ({
         hours: acc.hours + curr.durationInPeriod,
         wt: acc.wt + parseFloat(calculateWorkUnits(curr.durationInPeriod)),
-        sp: acc.sp + curr.storyPoints,
+        sp: acc.sp + calculateStoryPoints(curr.durationInPeriod),
       }),
       { hours: 0, wt: 0, sp: 0 }
     );
-
     const sortedActivities = computedActivities.sort(
       (a, b) => b.durationInPeriod - a.durationInPeriod
     );

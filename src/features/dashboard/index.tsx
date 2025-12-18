@@ -61,14 +61,14 @@ export default function DashboardView() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 ">
       {/* Header Responsivo */}
-      <div className="flex flex-col xl:flex-row justify-between items-end xl:items-center gap-4 bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+      <div className="flex flex-col xl:flex-row justify-between items-end xl:items-center gap-4 bg-slate-900/50 p-3 rounded-lg border border-slate-800 transition-all duration-1500 ease-in-out min-h-25 ">
         {/* Controles de Esquerda */}
         <div className="flex items-center gap-4 w-full xl:w-auto overflow-x-auto pb-1 xl:pb-0">
           {/* Seletor de Data Única */}
           {filter === 'day' && (
-            <div className="relative">
+            <div className="relative animate-in fade-in duration-300">
               <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-500">
                 <CalendarIcon className="h-3.5 w-3.5" />
               </div>
@@ -83,7 +83,7 @@ export default function DashboardView() {
 
           {/* Controles de Sprint */}
           {filter === 'sprint' && (
-            <div className="flex items-center gap-2 bg-slate-950/50 p-1.5 rounded-md border border-slate-800">
+            <div className="flex items-center gap-2 bg-slate-950/50 p-1.5 rounded-md border border-slate-800 animate-in fade-in duration-300">
               {/* Navegação */}
               <div className="flex items-center">
                 <Button
@@ -121,15 +121,15 @@ export default function DashboardView() {
 
               {/* Configuração DE -> ATÉ */}
               <div className="flex items-center gap-1">
-                <div className="flex items-center bg-slate-900 rounded border border-slate-800 px-1">
-                  <span className="text-[10px] text-slate-500 px-1 font-bold">DE</span>
+                <div className="flex items-center bg-slate-900 rounded border border-slate-800 gap-2 p-1 ">
+                  <span className="text-[10px] text-slate-500  font-bold">DE</span>
                   <Select
                     value={String(sprintConfig.startDay)}
                     onValueChange={(v) =>
                       setSprintConfig((p) => ({ ...p, startDay: Number(v) as WeekDay }))
                     }
                   >
-                    <SelectTrigger className="h-6 w-[55px] text-[10px] bg-transparent border-none focus:ring-0 px-1 text-slate-300">
+                    <SelectTrigger className="h-6  text-[10px] bg-transparent border-none focus:ring-0  text-slate-300">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -144,15 +144,15 @@ export default function DashboardView() {
 
                 <ArrowRight className="h-3 w-3 text-slate-600" />
 
-                <div className="flex items-center bg-slate-900 rounded border border-slate-800 px-1">
-                  <span className="text-[10px] text-slate-500 px-1 font-bold">ATÉ</span>
+                <div className="flex items-center bg-slate-900 rounded border border-slate-800 gap-2 p-1">
+                  <span className="text-[10px] text-slate-500 gap-2 p-1 font-bold">ATÉ</span>
                   <Select
                     value={String(sprintConfig.endDay)}
                     onValueChange={(v) =>
                       setSprintConfig((p) => ({ ...p, endDay: Number(v) as WeekDay }))
                     }
                   >
-                    <SelectTrigger className="h-6 w-[55px] text-[10px] bg-transparent border-none focus:ring-0 px-1 text-slate-300">
+                    <SelectTrigger className="h-6 w-[55px] text-[10px] bg-transparent border-none focus:ring-0 gap-2 p-1 text-slate-300">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

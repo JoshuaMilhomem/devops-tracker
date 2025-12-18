@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 
-import { Activity, CalendarRange, FileText, Filter } from 'lucide-react';
+import { Activity, CalendarRange, Copy, FileText, Filter } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
   Select,
@@ -11,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { calculateWorkUnits, formatTime } from '@/lib/time-utils';
+import { calculateStoryPoints, calculateWorkUnits, formatTime } from '@/lib/time-utils';
 
 import type { DashboardActivity, DashboardFilter } from '../hooks/use-dashboard-stats';
 
@@ -79,7 +81,6 @@ export function ActivityList({ activities, currentFilter }: ActivityListProps) {
   }, [activities, selectedTag]);
 
   const showDateRange = currentFilter !== 'day';
-
   return (
     <Card className="border-slate-800 bg-slate-900/20 flex flex-col h-full">
       <div className="p-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -126,6 +127,12 @@ export function ActivityList({ activities, currentFilter }: ActivityListProps) {
         <div className="divide-y divide-slate-800/50">
           {filteredActivities.map((task) => {
             const dateRange = showDateRange ? getTaskDateRange(task) : null;
+            const currentSp = calculateStoryPoints(task.durationInPeriod);
+            const workUnits = calculateWorkUnits(task.durationInPeriod).toString();
+            const copyWorkUnitsToClipboard = () => {
+              navigator.clipboard.writeText(workUnits);
+              toast.info(`Work Units (${workUnits}) copiado para a área de transferência!`);
+            };
 
             return (
               <div
@@ -150,12 +157,11 @@ export function ActivityList({ activities, currentFilter }: ActivityListProps) {
                         {task.name}
                       </span>
 
-                      {task.storyPoints > 0 && (
-                        <span className="text-[10px] font-bold text-slate-500 border border-slate-800 px-1.5 py-0.5 rounded bg-slate-950/50">
-                          {task.storyPoints} SP
+                      {currentSp > 0 && (
+                        <span className="text-[10px] font-bold text-purple-500 border border-purple-500/30 px-1.5 py-0.5 rounded bg-purple-500/10">
+                          {currentSp} SP
                         </span>
                       )}
-
                       {/* Renderização da Data */}
                       {dateRange && (
                         <span className="flex items-center gap-1 text-[10px] text-slate-500 font-mono bg-slate-900/50 px-1.5 py-0.5 rounded border border-slate-800/50 ml-1">
@@ -208,13 +214,23 @@ export function ActivityList({ activities, currentFilter }: ActivityListProps) {
                     </span>
                   </div>
 
-                  <div className="flex flex-col items-end w-20">
+                  <div className="flex flex-col items-end ">
                     <span className="text-[10px] uppercase text-slate-600 font-bold tracking-wider">
                       Unidades
                     </span>
-                    <span className="text-sm text-blue-400 font-bold font-mono">
-                      {calculateWorkUnits(task.durationInPeriod)} WT
-                    </span>
+                    <div className="flex items-center">
+                      <span className="text-sm text-blue-400 font-bold font-mono">
+                        {workUnits} WT
+                      </span>
+                      <Button
+                        variant={'ghost'}
+                        size={'icon-sm'}
+                        className="p-0 ml-1 opacity-70 hover:opacity-100"
+                        onClick={copyWorkUnitsToClipboard}
+                      >
+                        <Copy size={14} className="inline-block ml-1 mb-0.5" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>

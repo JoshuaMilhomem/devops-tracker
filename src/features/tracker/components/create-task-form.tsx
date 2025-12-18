@@ -38,12 +38,12 @@ const TAG_COLORS = [
 ];
 
 interface CreateTaskFormProps {
-  onCreate: (name: string, desc: string, sp: number, tags: Tag[]) => void;
+  onCreate: (name: string, desc: string, tags: Tag[]) => void;
   availableTags: Tag[];
 }
 
 export function CreateTaskForm({ onCreate, availableTags }: CreateTaskFormProps) {
-  const [form, setForm] = useState({ name: '', desc: '', sp: '' });
+  const [form, setForm] = useState({ name: '', desc: '' });
   const [tags, setTags] = useState<Tag[]>([]);
 
   const [open, setOpen] = useState(false);
@@ -55,12 +55,11 @@ export function CreateTaskForm({ onCreate, availableTags }: CreateTaskFormProps)
 
   const handleSubmit = () => {
     if (!form.name.trim()) return;
-    onCreate(form.name, form.desc, Number(form.sp) || 0, tags);
-    setForm({ name: '', desc: '', sp: '' });
+    onCreate(form.name, form.desc, tags);
+    setForm({ name: '', desc: '' });
     setTags([]);
     setInputValue('');
   };
-
   const handleSelectTag = (tag: Tag) => {
     if (!tags.some((t) => t.label === tag.label)) {
       setTags([...tags, tag]);
@@ -272,21 +271,11 @@ export function CreateTaskForm({ onCreate, availableTags }: CreateTaskFormProps)
         </div>
 
         {/* Footer do Form */}
-        <div className="grid grid-cols-3 gap-2 pt-2">
-          <div className="col-span-1">
-            <Input
-              type="number"
-              placeholder="SP"
-              value={form.sp}
-              onChange={(e) => setForm({ ...form, sp: e.target.value })}
-              className="bg-slate-950 border-slate-700 text-slate-200 text-center px-1 focus-visible:ring-blue-500"
-              title="Story Points"
-            />
-          </div>
+        <div className="pt-2">
           <Button
             onClick={handleSubmit}
             disabled={!form.name.trim()}
-            className="col-span-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
           >
             Adicionar Tarefa
           </Button>

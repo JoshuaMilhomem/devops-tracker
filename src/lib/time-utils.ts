@@ -34,3 +34,18 @@ export const toLocalInput = (isoString: string | null) => {
   const minutes = String(date.getMinutes()).padStart(2, '0');
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
+/**
+ * Calcula Story Points baseado na duração em milissegundos.
+ * Regra: Fibonacci adaptado às horas trabalhadas.
+ */
+export function calculateStoryPoints(ms: number): number {
+  const hours = ms / (1000 * 60 * 60);
+  if (hours <= 0) return 0;
+  if (hours < 1 && ms > 0) return 1;
+  if (hours < 2) return 1;
+  if (hours < 4) return 2;
+  if (hours < 8) return 3;
+  if (hours < 16) return 5;
+  if (hours < 24) return 8;
+  return 13;
+}

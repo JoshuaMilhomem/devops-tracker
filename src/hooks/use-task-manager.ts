@@ -9,14 +9,13 @@ export const useTaskManager = () => {
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
-  const createTask = (name: string, desc: string, sp: number, tags: Tag[] = []) => {
+  const createTask = (name: string, desc: string, tags: Tag[] = []) => {
     if (!name.trim()) return;
 
     const newTask: Task = {
       id: generateId(),
       name,
       description: desc,
-      storyPoints: sp,
       tags,
       status: 'idle',
       intervals: [],

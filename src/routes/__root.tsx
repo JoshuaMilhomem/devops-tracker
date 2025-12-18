@@ -18,10 +18,12 @@ export const Route = createRootRoute({
         <AppHeader />
         <GlobalTaskOverlay />
         <main className="container mx-auto max-w-5xl p-4 py-8 flex-1">
-          <Outlet />
+          <div className="pt-[env(titlebar-area-height,0px)]">
+            <Outlet />
+          </div>
         </main>
 
-        <Toaster />
+        <Toaster richColors />
       </div>
     </ThemeProvider>
   ),

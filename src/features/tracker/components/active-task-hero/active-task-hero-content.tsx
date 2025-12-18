@@ -13,7 +13,7 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { calculateWorkUnits, formatTime } from '@/lib/time-utils';
+import { calculateStoryPoints, calculateWorkUnits, formatTime } from '@/lib/time-utils';
 import type { Task } from '@/types';
 
 export interface HeroContentProps {
@@ -48,7 +48,7 @@ export function HeroContent({
   dragHandleProps,
 }: HeroContentProps) {
   const isRunning = task.status === 'running';
-
+  const currentSp = calculateStoryPoints(elapsed);
   let containerClasses = '';
   if (inPip) {
     containerClasses = 'w-full h-full bg-slate-950 border-0';
@@ -244,12 +244,18 @@ export function HeroContent({
           >
             {formatTime(elapsed)}
           </div>
-          <div className="text-xs sm:text-sm text-slate-400 font-mono mt-1">
-            <span className="text-blue-400 font-bold">{calculateWorkUnits(elapsed)}</span> Work
-            Units
+          <div className="text-xs sm:text-sm text-slate-400 font-mono mt-1 flex items-center gap-3 justify-center sm:justify-start">
+            {/* Work Units */}
+            <span>
+              <span className="text-blue-400 font-bold">{calculateWorkUnits(elapsed)}</span> WT
+            </span>
+            <span className="text-slate-600">|</span>
+            {/* Story Points Dinâmicos */}
+            <span>
+              <span className="text-purple-400 font-bold">{currentSp}</span> SP
+            </span>
           </div>
         </div>
-
         <div className="grid grid-cols-2 gap-2 sm:gap-3 mt-auto shrink-0">
           {isRunning ? (
             <Button
