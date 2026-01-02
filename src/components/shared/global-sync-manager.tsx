@@ -11,25 +11,20 @@ import { tasksAtom } from '@/store/task-atoms';
 import { lastSyncTimeAtom, syncStatusAtom } from '@/store/ui-atoms';
 import { type Task, backupSchema } from '@/types';
 
-
 const mergeTasks = (localTasks: Task[], remoteTasks: Task[]): Task[] => {
   const mergedMap = new Map<string, Task>();
 
-  
   localTasks.forEach((t) => mergedMap.set(t.id, t));
 
-  
   remoteTasks.forEach((remoteTask) => {
     const localTask = mergedMap.get(remoteTask.id);
 
     if (!localTask) {
       mergedMap.set(remoteTask.id, remoteTask);
     } else {
-      
       const localDate = new Date(localTask.updatedAt || 0).getTime();
       const remoteDate = new Date(remoteTask.updatedAt || 0).getTime();
 
-      
       if (remoteDate >= localDate) {
         mergedMap.set(remoteTask.id, remoteTask);
       }
@@ -46,19 +41,14 @@ export function GlobalSyncManager() {
   const syncMode = useAtomValue(syncModeAtom);
   const [tasks, setTasks] = useAtom(tasksAtom);
 
-  
-  
-  
   const setSyncStatus = useSetAtom(syncStatusAtom);
   const setLastSync = useSetAtom(lastSyncTimeAtom);
 
-  
   const { backup } = useCloudSync(user?.uid);
 
   const isRemoteUpdate = useRef(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  
   useEffect(() => {
     if (!user || syncMode !== 'automatic') return;
 
@@ -74,13 +64,11 @@ export function GlobalSyncManager() {
         const remoteTasks = validation.data;
 
         setTasks((currentLocalTasks) => {
-          
           if (currentLocalTasks.length === 0 && remoteTasks.length === 0) return currentLocalTasks;
 
           const currentStr = JSON.stringify(currentLocalTasks);
           const remoteStr = JSON.stringify(remoteTasks);
 
-          
           if (currentStr === remoteStr) {
             setSyncStatus('synced');
             return currentLocalTasks;
@@ -90,15 +78,11 @@ export function GlobalSyncManager() {
           const mergedTasks = mergeTasks(currentLocalTasks, remoteTasks);
           const mergedStr = JSON.stringify(mergedTasks);
 
-          
-          
           if (mergedStr === remoteStr) {
             isRemoteUpdate.current = true;
             setSyncStatus('synced');
             setLastSync(new Date());
           } else {
-            
-            
             isRemoteUpdate.current = false;
           }
 
@@ -114,11 +98,9 @@ export function GlobalSyncManager() {
     return () => unsubscribe();
   }, [user, syncMode, setTasks, setSyncStatus, setLastSync]);
 
-  
   useEffect(() => {
     if (!user || syncMode !== 'automatic') return;
 
-    
     if (isRemoteUpdate.current) {
       isRemoteUpdate.current = false;
       return;
@@ -128,7 +110,6 @@ export function GlobalSyncManager() {
 
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-    
     timeoutRef.current = setTimeout(async () => {
       try {
         await backup({ silent: true });
