@@ -26,7 +26,7 @@ export function useCloudSync(userId?: string) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
-  const backup = useAtomCallback(async (get, set, options?: BackupOptions) => {
+  const backup = useAtomCallback(async (get, _, options?: BackupOptions) => {
     if (!userId) {
       if (!options?.silent) toast.error('Você precisa estar logado para fazer backup.');
       return;
