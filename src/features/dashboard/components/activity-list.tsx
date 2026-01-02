@@ -100,7 +100,7 @@ export function ActivityList({ activities, currentFilter }: ActivityListProps) {
           <div className="flex items-center gap-2">
             <Filter className="h-3 w-3 text-slate-500" />
             <Select value={selectedTag} onValueChange={setSelectedTag}>
-              <SelectTrigger className="h-7 w-[160px] text-xs bg-slate-950 border-slate-800 focus:ring-slate-700">
+              <SelectTrigger className="h-7 w-40 text-xs bg-slate-950 border-slate-800 focus:ring-slate-700">
                 <SelectValue placeholder="Filtrar por tag" />
               </SelectTrigger>
               <SelectContent>

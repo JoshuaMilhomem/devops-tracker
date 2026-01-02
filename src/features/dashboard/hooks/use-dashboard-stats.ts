@@ -17,15 +17,19 @@ interface SprintConfig {
   offset: number;
 }
 
-/**
- * Retorna a data do último dia da semana especificado (startDay)
- * relativo à data de referência.
- */
+// [NOVO] Interface para os dados do gráfico
+export interface ChartDataPoint {
+  date: string; // "12/05" (Label eixo X)
+  fullDate: string; // ISO Date (Para sort/tooltip)
+  wt: number; // Work Units
+  sp: number; // Story Points
+  hours: number; // Horas brutas
+}
+
 const getSprintStart = (date: Date, startDay: WeekDay): Date => {
   const result = new Date(date);
   result.setHours(0, 0, 0, 0);
   const currentDay = result.getDay();
-
   const diff = (currentDay - startDay + 7) % 7;
   result.setDate(result.getDate() - diff);
   return result;
@@ -48,15 +52,11 @@ export function useDashboardStats(
       rangeEnd = new Date(year, month - 1, day + 1);
     } else if (filter === 'month') {
       const [year, month] = selectedDate.split('-').map(Number);
-
       rangeStart = new Date(year, month - 1, 1);
-
       rangeEnd = new Date(year, month, 0);
-
       rangeEnd.setHours(23, 59, 59, 999);
     } else {
       const currentSprintStart = getSprintStart(today, sprintConfig.startDay);
-
       rangeStart = new Date(currentSprintStart);
       rangeStart.setDate(rangeStart.getDate() + sprintConfig.offset * 7);
       rangeEnd = new Date(rangeStart);
@@ -69,6 +69,7 @@ export function useDashboardStats(
     const startTs = rangeStart.getTime();
     const endTs = rangeEnd.getTime();
 
+    // 1. Cálculo das Atividades
     const computedActivities = tasks
       .map((t) => {
         let duration = 0;
@@ -77,7 +78,6 @@ export function useDashboardStats(
         t.intervals.forEach((i) => {
           const iStart = new Date(i.start).getTime();
           const iEnd = i.end ? new Date(i.end).getTime() : new Date().getTime();
-
           const overlapStart = Math.max(startTs, iStart);
           const overlapEnd = Math.min(endTs, iEnd);
 
@@ -95,6 +95,7 @@ export function useDashboardStats(
       })
       .filter((t) => t.hasActivityInPeriod) as DashboardActivity[];
 
+    // 2. Totais
     const totalStats = computedActivities.reduce(
       (acc, curr) => ({
         hours: acc.hours + curr.durationInPeriod,
@@ -103,16 +104,63 @@ export function useDashboardStats(
       }),
       { hours: 0, wt: 0, sp: 0 }
     );
+
     const sortedActivities = computedActivities.sort(
       (a, b) => b.durationInPeriod - a.durationInPeriod
     );
 
+    // [NOVO] 3. Geração de Dados para o Gráfico (Agregação Diária)
+    const chartData: ChartDataPoint[] = [];
+    const iterDate = new Date(rangeStart);
+
+    // Loop dia a dia dentro do range selecionado
+    while (iterDate.getTime() < rangeEnd.getTime()) {
+      const dayStart = new Date(iterDate);
+      dayStart.setHours(0, 0, 0, 0);
+
+      const dayEnd = new Date(iterDate);
+      dayEnd.setHours(23, 59, 59, 999);
+
+      const dayStartTs = dayStart.getTime();
+      const dayEndTs = dayEnd.getTime();
+
+      let dailyMs = 0;
+
+      // Soma a duração de todas as tasks NESTE dia específico
+      tasks.forEach((t) => {
+        t.intervals.forEach((i) => {
+          const iStart = new Date(i.start).getTime();
+          const iEnd = i.end ? new Date(i.end).getTime() : new Date().getTime();
+
+          const start = Math.max(dayStartTs, iStart);
+          const end = Math.min(dayEndTs, iEnd);
+
+          if (start < end) {
+            dailyMs += end - start;
+          }
+        });
+      });
+
+      chartData.push({
+        date: new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(
+          dayStart
+        ),
+        fullDate: dayStart.toISOString(),
+        wt: parseFloat(calculateWorkUnits(dailyMs)),
+        sp: calculateStoryPoints(dailyMs),
+        hours: dailyMs / (1000 * 60 * 60),
+      });
+
+      // Próximo dia
+      iterDate.setDate(iterDate.getDate() + 1);
+    }
+
     return {
       stats: totalStats,
       activities: sortedActivities,
+      chartData, // Retornando os dados processados
       periodLabel: {
         start: rangeStart,
-
         end: new Date(rangeEnd.getTime() - 1000),
       },
     };
