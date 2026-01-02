@@ -5,6 +5,8 @@ import { BarChart3, History, ListTodo } from 'lucide-react';
 import { Logo } from '@/assests/logo';
 import { dashboardViewAtom, historyViewAtom } from '@/store/view-state-atoms';
 
+import { SettingsModal } from '../shared/settings-modal';
+
 interface NavLinkProps {
   to: string;
   icon: React.ComponentType<{ size: number }>;
@@ -43,6 +45,7 @@ export function AppHeader() {
           <NavLink to="/history" icon={History} label="Histórico" search={lastHistoryState} />
           <NavLink to="/dashboard" icon={BarChart3} label="Dash" search={lastDashboardState} />
         </nav>
+        <SettingsModal />
       </div>
     </header>
   );
