@@ -53,7 +53,6 @@ export function DashboardToolbar({
 }: DashboardToolbarProps) {
   return (
     <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-2 flex flex-col lg:flex-row gap-4 items-center shadow-sm">
-      {/* 1. Toggle de Tipo */}
       <div className="bg-slate-950 p-1 rounded-lg border border-slate-800/50 flex shrink-0 w-full lg:w-auto">
         {(['sprint', 'day', 'month'] as const).map((f) => (
           <button
@@ -87,9 +86,7 @@ export function DashboardToolbar({
 
       <div className="hidden lg:block w-px h-8 bg-slate-800 mx-2" />
 
-      {/* 2. Controles Dinâmicos */}
       <div className="flex-1 w-full lg:w-auto flex justify-center lg:justify-start">
-        {/* MODO DIA */}
         {filter === 'day' && (
           <div className="relative w-full lg:max-w-[200px] animate-in zoom-in-95 duration-200">
             <CalendarIcon className="absolute left-3 top-2.5 h-4 w-4 text-slate-500 pointer-events-none" />
@@ -102,7 +99,6 @@ export function DashboardToolbar({
           </div>
         )}
 
-        {/* MODO SPRINT */}
         {filter === 'sprint' && (
           <div className="flex flex-wrap items-center gap-2 animate-in zoom-in-95 duration-200 w-full lg:w-auto justify-center lg:justify-start">
             <div className="flex items-center bg-slate-950 rounded-md border border-slate-800 p-0.5">
@@ -167,7 +163,6 @@ export function DashboardToolbar({
           </div>
         )}
 
-        {/* MODO MÊS */}
         {filter === 'month' && (
           <div className="flex items-center gap-2 animate-in zoom-in-95 duration-200 w-full lg:w-auto">
             <Select value={currentMonthValue} onValueChange={(v) => onUpdateSearch({ date: v })}>

@@ -12,7 +12,6 @@ import { useDashboardStats } from './use-dashboard-stats';
 export function useDashboardController() {
   const { tasks } = useTaskManager();
 
-  // 1. Router & State
   const search = useSearch({ from: '/dashboard/' });
   const navigate = useNavigate({ from: '/dashboard' });
   useViewPersistence(search, dashboardViewAtom);
@@ -24,7 +23,6 @@ export function useDashboardController() {
     });
   };
 
-  // 2. Parâmetros Normalizados
   const filter = search.filter ?? 'sprint';
   const selectedDate = search.date ?? new Date().toISOString().split('T')[0];
 
@@ -37,7 +35,6 @@ export function useDashboardController() {
     [search.startDay, search.endDay, search.sprintOffset]
   );
 
-  // 3. Dados Principais
   const { stats, activities, chartData } = useDashboardStats(
     tasks,
     filter,
@@ -45,7 +42,6 @@ export function useDashboardController() {
     sprintConfig
   );
 
-  // 4. Helpers de UI (Lógica de Apresentação)
   const currentSprintRange = getSprintRange(sprintConfig);
 
   const currentMonthValue = useMemo(() => {
@@ -63,7 +59,6 @@ export function useDashboardController() {
     });
   };
 
-  // 5. Lógica de "Smart Month Options" (Extraída do index)
   const monthOptions = useMemo(() => {
     const activeMonths = new Set<string>();
 
@@ -111,18 +106,17 @@ export function useDashboardController() {
   }, [tasks]);
 
   return {
-    // Estado
     filter,
     selectedDate,
     sprintConfig,
     currentSprintRange,
     currentMonthValue,
     monthOptions,
-    // Dados
+
     stats,
     activities,
     chartData,
-    // Ações
+
     updateSearch,
     handleSprintNavigate,
     formatDateDisplay,

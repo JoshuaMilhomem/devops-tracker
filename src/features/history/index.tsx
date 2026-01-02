@@ -12,7 +12,6 @@ import { useHistoryController } from './hooks/use-history-controller';
 
 export default function HistoryView() {
   const {
-    // State
     mode,
     statusFilter,
     selectedDate,
@@ -20,15 +19,15 @@ export default function HistoryView() {
     rangeFrom,
     rangeTo,
     currentSprintRange,
-    // Data
-    tasks, // Raw tasks apenas para find se necessário
+
+    tasks,
     filteredTasks,
     availableTags,
-    // Actions
+
     updateSearch,
     handleSprintNavigate,
     formatDateDisplay,
-    // Task Ops
+
     reopenTask,
     deleteTask,
     updateTaskDetails,
@@ -37,14 +36,12 @@ export default function HistoryView() {
     updateInterval,
   } = useHistoryController();
 
-  // Local UI State (Modais)
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [logTaskId, setLogTaskId] = useState<string | null>(null);
   const logTask = tasks.find((t) => t.id === logTaskId) || null;
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500 py-6 px-4 sm:px-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
@@ -56,7 +53,6 @@ export default function HistoryView() {
         </div>
       </div>
 
-      {/* Toolbar Isolada */}
       <HistoryToolbar
         mode={mode}
         statusFilter={statusFilter}
@@ -70,7 +66,6 @@ export default function HistoryView() {
         formatDate={formatDateDisplay}
       />
 
-      {/* Lista de Resultados */}
       {filteredTasks.length === 0 ? (
         <div className="py-20 text-center text-slate-500 border-2 border-dashed border-slate-800 rounded-xl bg-slate-900/20">
           <Filter className="mx-auto h-12 w-12 opacity-20 mb-4" />
@@ -96,7 +91,6 @@ export default function HistoryView() {
         </div>
       )}
 
-      {/* Modais */}
       <EditTaskModal
         task={editTask}
         onClose={() => setEditTask(null)}

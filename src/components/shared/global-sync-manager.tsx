@@ -1,38 +1,66 @@
-// src/components/shared/global-sync-manager.tsx
 import { useEffect, useRef } from 'react';
 
 import { doc, onSnapshot } from 'firebase/firestore';
-import { useAtom, useAtomValue } from 'jotai';
-import { toast } from 'sonner';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 
 import { useAuth } from '@/hooks/use-auth';
 import { useCloudSync } from '@/hooks/use-cloud-sync';
 import { db } from '@/lib/firebase';
-import { decimalSeparatorAtom, syncModeAtom } from '@/store/settings-atoms';
+import { syncModeAtom } from '@/store/settings-atoms';
 import { tasksAtom } from '@/store/task-atoms';
-import type { Task } from '@/types';
+import { lastSyncTimeAtom, syncStatusAtom } from '@/store/ui-atoms';
+import { type Task, backupSchema } from '@/types';
+
+
+const mergeTasks = (localTasks: Task[], remoteTasks: Task[]): Task[] => {
+  const mergedMap = new Map<string, Task>();
+
+  
+  localTasks.forEach((t) => mergedMap.set(t.id, t));
+
+  
+  remoteTasks.forEach((remoteTask) => {
+    const localTask = mergedMap.get(remoteTask.id);
+
+    if (!localTask) {
+      mergedMap.set(remoteTask.id, remoteTask);
+    } else {
+      
+      const localDate = new Date(localTask.updatedAt || 0).getTime();
+      const remoteDate = new Date(remoteTask.updatedAt || 0).getTime();
+
+      
+      if (remoteDate >= localDate) {
+        mergedMap.set(remoteTask.id, remoteTask);
+      }
+    }
+  });
+
+  return Array.from(mergedMap.values()).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+};
 
 export function GlobalSyncManager() {
   const { user } = useAuth();
   const syncMode = useAtomValue(syncModeAtom);
-
-  // Usamos useAtom aqui pois precisaremos "setar" o estado quando vier da nuvem
   const [tasks, setTasks] = useAtom(tasksAtom);
-  const [decimalSeparator, setDecimalSeparator] = useAtom(decimalSeparatorAtom);
 
+  
+  
+  
+  const setSyncStatus = useSetAtom(syncStatusAtom);
+  const setLastSync = useSetAtom(lastSyncTimeAtom);
+
+  
   const { backup } = useCloudSync(user?.uid);
 
-  // REFS DE CONTROLE (Evitam re-renders e loops)
   const isRemoteUpdate = useRef(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isMounted = useRef(false);
 
-  // 1. LISTENER (Nuvem -> Local)
+  
   useEffect(() => {
-    // Só conecta se tiver usuário e estiver em modo automático
     if (!user || syncMode !== 'automatic') return;
-
-    console.log('[Sync] Conectando ao Firestore...');
 
     const unsubscribe = onSnapshot(
       doc(db, 'users', user.uid),
@@ -40,74 +68,82 @@ export function GlobalSyncManager() {
         if (!docSnapshot.exists()) return;
 
         const data = docSnapshot.data();
-        const remoteBackup = data.backup;
+        const validation = backupSchema.safeParse(data.backup?.tasks);
 
-        // Validação básica
-        if (!remoteBackup || !Array.isArray(remoteBackup.tasks)) return;
+        if (!validation.success) return;
+        const remoteTasks = validation.data;
 
-        // Comparação simples para evitar updates desnecessários
-        // (Em prod, um hash profundo ou timestamp seria melhor, mas JSON stringify serve para MVP)
-        const currentLocalStr = JSON.stringify(tasks);
-        const incomingRemoteStr = JSON.stringify(remoteBackup.tasks);
+        setTasks((currentLocalTasks) => {
+          
+          if (currentLocalTasks.length === 0 && remoteTasks.length === 0) return currentLocalTasks;
 
-        if (currentLocalStr !== incomingRemoteStr) {
-          console.log('[Sync] Atualização recebida da nuvem.');
+          const currentStr = JSON.stringify(currentLocalTasks);
+          const remoteStr = JSON.stringify(remoteTasks);
 
-          // MARCA A FLAG: Isso impede que o useEffect de backup dispare
-          isRemoteUpdate.current = true;
-
-          setTasks(remoteBackup.tasks as Task[]);
-
-          // Sincroniza configurações também se existirem
-          if (remoteBackup.settings?.decimalSeparator) {
-            setDecimalSeparator(remoteBackup.settings.decimalSeparator);
+          
+          if (currentStr === remoteStr) {
+            setSyncStatus('synced');
+            return currentLocalTasks;
           }
 
-          // Feedback sutil (opcional, pode ser removido se ficar chato)
-          // toast.info('Sincronizado com outro dispositivo.');
-        }
+          console.log('[Sync] Dados novos detectados. Mesclando...');
+          const mergedTasks = mergeTasks(currentLocalTasks, remoteTasks);
+          const mergedStr = JSON.stringify(mergedTasks);
+
+          
+          
+          if (mergedStr === remoteStr) {
+            isRemoteUpdate.current = true;
+            setSyncStatus('synced');
+            setLastSync(new Date());
+          } else {
+            
+            
+            isRemoteUpdate.current = false;
+          }
+
+          return mergedTasks;
+        });
       },
       (error) => {
         console.error('[Sync Error]', error);
-        toast.error('Erro na conexão em tempo real.');
+        setSyncStatus('error');
       }
     );
 
-    return () => {
-      console.log('[Sync] Desconectando listener.');
-      unsubscribe();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, syncMode, setTasks, setDecimalSeparator]); // "tasks" NÃO vai nas deps para não recriar o listener a cada digitação
+    return () => unsubscribe();
+  }, [user, syncMode, setTasks, setSyncStatus, setLastSync]);
 
-  // 2. BACKUP (Local -> Nuvem)
+  
   useEffect(() => {
-    if (!isMounted.current) {
-      isMounted.current = true;
-      return;
-    }
-
     if (!user || syncMode !== 'automatic') return;
 
-    // SE A MUDANÇA VEIO DA NUVEM, IGNORA O BACKUP
+    
     if (isRemoteUpdate.current) {
-      console.log('[Sync] Mudança remota detectada. Pulando backup (loop prevention).');
-      isRemoteUpdate.current = false; // Reseta a flag para as próximas interações manuais
+      isRemoteUpdate.current = false;
       return;
     }
 
-    // Debounce do Backup (Aguarda usuário parar de digitar/clicar)
+    setSyncStatus('syncing');
+
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-    timeoutRef.current = setTimeout(() => {
-      console.log('[Sync] Enviando alterações locais...');
-      backup({ silent: true });
-    }, 2000); // Aumentei para 2s para ser menos agressivo no Firestore
+    
+    timeoutRef.current = setTimeout(async () => {
+      try {
+        await backup({ silent: true });
+        setSyncStatus('synced');
+        setLastSync(new Date());
+      } catch (_error) {
+        console.error('[Sync Backup Error]', _error);
+        setSyncStatus('error');
+      }
+    }, 2000);
 
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [tasks, decimalSeparator, user, syncMode, backup]);
+  }, [tasks, user, syncMode, backup, setSyncStatus, setLastSync]);
 
   return null;
 }

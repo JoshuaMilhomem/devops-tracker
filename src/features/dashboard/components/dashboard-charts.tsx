@@ -21,18 +21,17 @@ interface DashboardChartsProps {
 const chartConfig = {
   wt: {
     label: 'Work Units (WT)',
-    // Verde Emerald (combina com text-emerald-400 dos cards)
+
     color: '#10b981',
   },
   sp: {
     label: 'Story Points (SP)',
-    // Roxo/Rosa (combina com text-purple-400 dos cards)
+
     color: '#a855f7',
   },
 } satisfies ChartConfig;
 
 export function DashboardCharts({ data }: DashboardChartsProps) {
-  // Se não houver dados, não renderiza nada
   if (!data || data.length === 0) return null;
 
   return (

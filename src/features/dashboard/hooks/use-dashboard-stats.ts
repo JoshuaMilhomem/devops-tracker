@@ -17,13 +17,12 @@ interface SprintConfig {
   offset: number;
 }
 
-// [NOVO] Interface para os dados do gráfico
 export interface ChartDataPoint {
-  date: string; // "12/05" (Label eixo X)
-  fullDate: string; // ISO Date (Para sort/tooltip)
-  wt: number; // Work Units
-  sp: number; // Story Points
-  hours: number; // Horas brutas
+  date: string;
+  fullDate: string;
+  wt: number;
+  sp: number;
+  hours: number;
 }
 
 const getSprintStart = (date: Date, startDay: WeekDay): Date => {
@@ -69,7 +68,6 @@ export function useDashboardStats(
     const startTs = rangeStart.getTime();
     const endTs = rangeEnd.getTime();
 
-    // 1. Cálculo das Atividades
     const computedActivities = tasks
       .map((t) => {
         let duration = 0;
@@ -95,7 +93,6 @@ export function useDashboardStats(
       })
       .filter((t) => t.hasActivityInPeriod) as DashboardActivity[];
 
-    // 2. Totais
     const totalStats = computedActivities.reduce(
       (acc, curr) => ({
         hours: acc.hours + curr.durationInPeriod,
@@ -109,11 +106,9 @@ export function useDashboardStats(
       (a, b) => b.durationInPeriod - a.durationInPeriod
     );
 
-    // [NOVO] 3. Geração de Dados para o Gráfico (Agregação Diária)
     const chartData: ChartDataPoint[] = [];
     const iterDate = new Date(rangeStart);
 
-    // Loop dia a dia dentro do range selecionado
     while (iterDate.getTime() < rangeEnd.getTime()) {
       const dayStart = new Date(iterDate);
       dayStart.setHours(0, 0, 0, 0);
@@ -126,7 +121,6 @@ export function useDashboardStats(
 
       let dailyMs = 0;
 
-      // Soma a duração de todas as tasks NESTE dia específico
       tasks.forEach((t) => {
         t.intervals.forEach((i) => {
           const iStart = new Date(i.start).getTime();
@@ -151,14 +145,13 @@ export function useDashboardStats(
         hours: dailyMs / (1000 * 60 * 60),
       });
 
-      // Próximo dia
       iterDate.setDate(iterDate.getDate() + 1);
     }
 
     return {
       stats: totalStats,
       activities: sortedActivities,
-      chartData, // Retornando os dados processados
+      chartData,
       periodLabel: {
         start: rangeStart,
         end: new Date(rangeEnd.getTime() - 1000),

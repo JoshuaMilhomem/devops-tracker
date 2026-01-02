@@ -20,6 +20,7 @@ export const useTaskManager = () => {
       status: 'idle',
       intervals: [],
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     setTasks((prev) => [newTask, ...prev]);
@@ -32,6 +33,7 @@ export const useTaskManager = () => {
           return {
             ...t,
             status: 'running',
+            updatedAt: new Date().toISOString(),
             intervals: [
               ...t.intervals,
               { id: generateId(), start: new Date().toISOString(), end: null },
@@ -50,6 +52,7 @@ export const useTaskManager = () => {
           return {
             ...t,
             status: 'paused',
+            updatedAt: new Date().toISOString(),
             intervals: t.intervals.map((i) =>
               i.end ? i : { ...i, end: new Date().toISOString() }
             ),
@@ -72,6 +75,7 @@ export const useTaskManager = () => {
           return {
             ...t,
             status: 'completed',
+            updatedAt: new Date().toISOString(),
             completedAt: new Date().toISOString(),
             intervals,
           };
@@ -97,6 +101,7 @@ export const useTaskManager = () => {
         if (t.id === id) {
           return {
             ...t,
+            updatedAt: new Date().toISOString(),
             status: t.intervals.length > 0 ? 'paused' : 'idle',
             completedAt: undefined,
           };
@@ -108,7 +113,9 @@ export const useTaskManager = () => {
   };
 
   const updateTaskDetails = (task: Task) => {
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
+    setTasks((prev) =>
+      prev.map((t) => (t.id === task.id ? { ...task, updatedAt: new Date().toISOString() } : t))
+    );
     toast.success('Detalhes atualizados com sucesso.');
   };
   const addManualInterval = (taskId: string) => {
@@ -119,6 +126,7 @@ export const useTaskManager = () => {
         t.id === taskId
           ? {
               ...t,
+              updatedAt: new Date().toISOString(),
               intervals: [
                 ...t.intervals,
                 { id: generateId(), start: oneHourAgo.toISOString(), end: now.toISOString() },
@@ -136,6 +144,7 @@ export const useTaskManager = () => {
         t.id === taskId
           ? {
               ...t,
+              updatedAt: new Date().toISOString(),
               intervals: t.intervals.filter((i) => i.id !== intervalId),
             }
           : t
@@ -156,6 +165,7 @@ export const useTaskManager = () => {
         if (t.id !== taskId) return t;
         return {
           ...t,
+          updatedAt: new Date().toISOString(),
           intervals: t.intervals.map((i) => (i.id !== intervalId ? i : { ...i, [field]: isoDate })),
         };
       })

@@ -58,7 +58,6 @@ export function HistoryToolbar({
 }: HistoryToolbarProps) {
   return (
     <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-2 flex flex-col lg:flex-row gap-4 items-center shadow-sm">
-      {/* SELETOR DE MODO */}
       <div className="bg-slate-950 p-1 rounded-lg border border-slate-800/50 flex shrink-0 w-full lg:w-auto">
         {(['sprint', 'day', 'range', 'all'] as const).map((m) => (
           <button
@@ -82,7 +81,6 @@ export function HistoryToolbar({
 
       <div className="hidden lg:block w-px h-8 bg-slate-800 mx-2" />
 
-      {/* CONTROLES DINÂMICOS (MEIO) */}
       <div className="flex-1 w-full lg:w-auto flex justify-center lg:justify-start">
         {mode === 'day' && (
           <div className="relative w-full lg:max-w-[200px] animate-in zoom-in-95 duration-200">
@@ -213,7 +211,6 @@ export function HistoryToolbar({
 
       <div className="hidden lg:block w-px h-8 bg-slate-800 mx-2" />
 
-      {/* FILTRO DE STATUS (DIREITA) */}
       <div className="w-full lg:w-[180px] shrink-0">
         <Select value={statusFilter} onValueChange={(v) => onUpdateSearch({ status: v as any })}>
           <SelectTrigger className="w-full bg-slate-950 border-slate-700 h-9 text-xs focus:ring-0 text-slate-300">

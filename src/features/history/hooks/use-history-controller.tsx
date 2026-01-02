@@ -8,7 +8,6 @@ import { type WeekDay, getSprintRange, parseDateParam } from '@/lib/time-utils';
 import { historyViewAtom } from '@/store/view-state-atoms';
 import type { Task } from '@/types';
 
-// Helper de lógica de negócio pura (pode ficar fora do hook)
 const isIntervalInPeriod = (task: Task, start: Date, end: Date) => {
   if (!task.intervals || task.intervals.length === 0) {
     const created = new Date(task.createdAt);
@@ -29,7 +28,6 @@ export function useHistoryController() {
   const taskManager = useTaskManager();
   const { tasks } = taskManager;
 
-  // 1. Router & State
   const search = useSearch({ from: '/history/' });
   const navigate = useNavigate({ from: '/history' });
   useViewPersistence(search, historyViewAtom);
@@ -41,7 +39,6 @@ export function useHistoryController() {
     });
   };
 
-  // 2. Normalização de Parâmetros
   const mode = search.mode ?? 'sprint';
   const statusFilter = search.status ?? 'all';
   const selectedDate = search.date ?? new Date().toISOString().split('T')[0];
@@ -57,18 +54,15 @@ export function useHistoryController() {
     [search.sprintStartDay, search.sprintEndDay, search.sprintOffset]
   );
 
-  // 3. Lógica de Filtragem (O "Coração" da página)
   const filteredTasks = useMemo(() => {
     let result = [...tasks];
 
-    // Filtro de Status
     if (statusFilter === 'completed') {
       result = result.filter((t) => t.status === 'completed');
     } else if (statusFilter === 'active') {
       result = result.filter((t) => t.status !== 'completed');
     }
 
-    // Filtro de Data/Periodo
     let startFilter: Date;
     let endFilter: Date;
 
@@ -85,7 +79,6 @@ export function useHistoryController() {
       endFilter = rangeTo || new Date(8640000000000000);
       endFilter.setHours(23, 59, 59, 999);
     } else {
-      // mode === 'all'
       return result.sort((a, b) => {
         const getLastActivity = (t: Task) => {
           if (t.intervals.length === 0) return new Date(t.createdAt).getTime();
@@ -96,10 +89,8 @@ export function useHistoryController() {
       });
     }
 
-    // Aplica intersecção de intervalos
     result = result.filter((t) => isIntervalInPeriod(t, startFilter, endFilter));
 
-    // Ordenação Padrão
     return result.sort((a, b) => {
       const getLastActivity = (t: Task) => {
         if (t.intervals.length === 0) return new Date(t.createdAt).getTime();
@@ -110,14 +101,12 @@ export function useHistoryController() {
     });
   }, [tasks, statusFilter, mode, selectedDate, sprintConfig, rangeFrom, rangeTo]);
 
-  // 4. Tags Disponíveis
   const availableTags = useMemo(() => {
     const tagsMap = new Map<string, any>();
     tasks.forEach((t) => t.tags?.forEach((tag) => tagsMap.set(tag.label, tag)));
     return Array.from(tagsMap.values()).sort((a, b) => a.label.localeCompare(b.label));
   }, [tasks]);
 
-  // 5. Helpers de UI
   const handleSprintNavigate = (direction: 'prev' | 'next') => {
     updateSearch({ sprintOffset: sprintConfig.offset + (direction === 'next' ? 1 : -1) });
   };
@@ -128,7 +117,6 @@ export function useHistoryController() {
   const currentSprintRange = getSprintRange(sprintConfig);
 
   return {
-    // State Values
     mode,
     statusFilter,
     selectedDate,
@@ -136,14 +124,14 @@ export function useHistoryController() {
     rangeTo,
     sprintConfig,
     currentSprintRange,
-    // Data
+
     filteredTasks,
     availableTags,
-    // Actions
+
     updateSearch,
     handleSprintNavigate,
     formatDateDisplay,
-    // Task Manager Actions (re-exportados para facilidade)
+
     ...taskManager,
   };
 }

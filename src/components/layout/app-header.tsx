@@ -6,6 +6,7 @@ import { Logo } from '@/assests/logo';
 import { dashboardViewAtom, historyViewAtom } from '@/store/view-state-atoms';
 
 import { SettingsModal } from '../shared/settings-modal';
+import { SyncIndicator } from '../shared/sync-indicator';
 
 interface NavLinkProps {
   to: string;
@@ -38,14 +39,16 @@ export function AppHeader() {
             DevOps<span className="text-muted-foreground group-hover:text-primary/70">Tracker</span>
           </h1>
         </Link>
+        <div className="ml-auto flex items-center gap-2">
+          <nav className="flex gap-1 bg-muted/50 p-1 rounded-lg border">
+            <NavLink to="/" icon={ListTodo} label="Tracker" />
 
-        <nav className="flex gap-1 bg-muted/50 p-1 rounded-lg border">
-          <NavLink to="/" icon={ListTodo} label="Tracker" />
-
-          <NavLink to="/history" icon={History} label="Histórico" search={lastHistoryState} />
-          <NavLink to="/dashboard" icon={BarChart3} label="Dash" search={lastDashboardState} />
-        </nav>
+            <NavLink to="/history" icon={History} label="Histórico" search={lastHistoryState} />
+            <NavLink to="/dashboard" icon={BarChart3} label="Dash" search={lastDashboardState} />
+          </nav>
+        </div>
         <SettingsModal />
+        <SyncIndicator />
       </div>
     </header>
   );
