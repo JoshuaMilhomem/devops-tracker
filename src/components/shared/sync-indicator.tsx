@@ -1,76 +1,92 @@
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { useAtomValue } from 'jotai';
-import { AlertTriangle, Cloud, CloudOff, RefreshCw } from 'lucide-react';
+import { AlertCircle, Cloud, CloudOff, HardDrive, RefreshCw } from 'lucide-react';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { syncModeAtom } from '@/store/settings-atoms';
 import { lastSyncTimeAtom, syncStatusAtom } from '@/store/ui-atoms';
+
+import { Button } from '../ui/button';
 
 export function SyncIndicator() {
   const status = useAtomValue(syncStatusAtom);
   const lastSync = useAtomValue(lastSyncTimeAtom);
+  const syncMode = useAtomValue(syncModeAtom);
 
-  if (status === 'idle') return null;
+  const getStatusConfig = () => {
+    if (syncMode === 'manual') {
+      return {
+        icon: HardDrive,
+        color: 'text-muted-foreground',
+        text: 'Modo Manual (Local)',
+        desc: 'As alterações não sobem automaticamente.',
+      };
+    }
 
-  const getStatusDetails = () => {
     switch (status) {
       case 'syncing':
         return {
           icon: RefreshCw,
-          color: 'text-blue-400',
-          label: 'Sincronizando...',
-          animate: 'animate-spin',
+          color: 'text-blue-500 animate-spin',
+          text: 'Sincronizando...',
+          desc: 'Enviando alterações...',
         };
       case 'synced':
         return {
           icon: Cloud,
-          color: 'text-emerald-400',
-          label: 'Sincronizado',
-          animate: '',
-        };
-      case 'error':
-        return {
-          icon: AlertTriangle,
-          color: 'text-red-400',
-          label: 'Erro de Sincronização',
-          animate: '',
+          color: 'text-green-500',
+          text: 'Sincronizado',
+          desc: lastSync
+            ? `Última atualização: ${format(lastSync, 'HH:mm:ss', { locale: ptBR })}`
+            : 'Tudo atualizado',
         };
       case 'offline':
         return {
           icon: CloudOff,
-          color: 'text-slate-500',
-          label: 'Offline',
-          animate: '',
+          color: 'text-amber-500',
+          text: 'Offline (Cache)',
+          desc: 'Usando dados locais. Sincronizará ao reconectar.',
         };
+      case 'error':
+        return {
+          icon: AlertCircle,
+          color: 'text-red-500',
+          text: 'Erro de Sincronização',
+          desc: 'Verifique sua conexão ou login.',
+        };
+      case 'idle':
       default:
-        return { icon: Cloud, color: 'text-slate-500', label: '', animate: '' };
+        return {
+          icon: CloudOff,
+          color: 'text-muted-foreground/50',
+          text: 'Desconectado',
+          desc: 'Faça login para sincronizar.',
+        };
     }
   };
 
-  const { icon: Icon, color, label, animate } = getStatusDetails();
-
-  const timeLabel = lastSync
-    ? `Última atualização: ${lastSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-    : label;
+  const config = getStatusConfig();
+  const Icon = config.icon;
 
   return (
     <TooltipProvider>
-      <Tooltip>
+      <Tooltip delayDuration={300}>
         <TooltipTrigger asChild>
-          <div
-            className={cn(
-              'flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 border border-slate-800 transition-colors',
-              status === 'error' && 'border-red-500/30 bg-red-500/10'
-            )}
+          <Button
+            variant={'ghost'}
+            size={'icon-lg'}
+            className={cn('transition-colors hover:bg-muted/50', config.color)}
           >
-            <Icon className={cn('w-4 h-4', color, animate)} />
-          </div>
+            <Icon className="h-4 w-4" />
+          </Button>
         </TooltipTrigger>
-        <TooltipContent
-          side="bottom"
-          className="text-xs bg-slate-900 border-slate-800 text-slate-300"
-        >
-          <p className="font-bold mb-0.5">{label}</p>
-          {status === 'synced' && <p className="text-[10px] text-slate-500">{timeLabel}</p>}
+        <TooltipContent align="end">
+          <div className="flex flex-col gap-1">
+            <p className="font-semibold">{config.text}</p>
+            <p className="text-xs text-muted-foreground">{config.desc}</p>
+          </div>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
