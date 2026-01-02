@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useWorkUnitFormatter } from '@/hooks/use-work-units-formatter';
 import { calculateStoryPoints, calculateWorkUnits, formatTime } from '@/lib/time-utils';
 
 import type { DashboardActivity, DashboardFilter } from '../hooks/use-dashboard-stats';
@@ -62,7 +63,7 @@ const getTaskDateRange = (task: ActivityWithTags): string | null => {
 
 export function ActivityList({ activities, currentFilter }: ActivityListProps) {
   const [selectedTag, setSelectedTag] = useState<string>('all');
-
+  const { format: formatWT } = useWorkUnitFormatter();
   const uniqueTags = useMemo(() => {
     const tagsMap = new Map<string, Tag>();
     activities.forEach((task) => {
@@ -129,9 +130,10 @@ export function ActivityList({ activities, currentFilter }: ActivityListProps) {
             const dateRange = showDateRange ? getTaskDateRange(task) : null;
             const currentSp = calculateStoryPoints(task.durationInPeriod);
             const workUnits = calculateWorkUnits(task.durationInPeriod).toString();
-            const copyWorkUnitsToClipboard = () => {
-              navigator.clipboard.writeText(workUnits);
-              toast.info(`Work Units (${workUnits}) copiado para a área de transferência!`);
+            const handleCopy = () => {
+              const formattedValue = formatWT(task.durationInPeriod);
+              navigator.clipboard.writeText(formattedValue);
+              toast.info(`Work Units (${formattedValue}) copiado!`);
             };
 
             return (
@@ -151,7 +153,6 @@ export function ActivityList({ activities, currentFilter }: ActivityListProps) {
                   </div>
 
                   <div className="min-w-0 flex-1 space-y-1">
-                    {/* Header: Nome + SP + DATA (Nova) */}
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-medium text-slate-200 truncate group-hover:text-white transition-colors">
                         {task.name}
@@ -162,7 +163,6 @@ export function ActivityList({ activities, currentFilter }: ActivityListProps) {
                           {currentSp} SP
                         </span>
                       )}
-                      {/* Renderização da Data */}
                       {dateRange && (
                         <span className="flex items-center gap-1 text-[10px] text-slate-500 font-mono bg-slate-900/50 px-1.5 py-0.5 rounded border border-slate-800/50 ml-1">
                           <CalendarRange className="h-3 w-3 opacity-70" />
@@ -214,19 +214,19 @@ export function ActivityList({ activities, currentFilter }: ActivityListProps) {
                     </span>
                   </div>
 
-                  <div className="flex flex-col items-end ">
+                  <div className="flex flex-col items-end">
                     <span className="text-[10px] uppercase text-slate-600 font-bold tracking-wider">
                       Unidades
                     </span>
                     <div className="flex items-center">
                       <span className="text-sm text-blue-400 font-bold font-mono">
-                        {workUnits} WT
+                        {workUnits} WT{' '}
                       </span>
                       <Button
                         variant={'ghost'}
                         size={'icon-sm'}
                         className="p-0 ml-1 opacity-70 hover:opacity-100"
-                        onClick={copyWorkUnitsToClipboard}
+                        onClick={handleCopy}
                       >
                         <Copy size={14} className="inline-block ml-1 mb-0.5" />
                       </Button>

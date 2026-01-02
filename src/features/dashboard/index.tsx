@@ -1,6 +1,14 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 
-import { ArrowRight, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import {
+  ArrowRight,
+  CalendarDays,
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  LayoutDashboard,
+} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,10 +20,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useTaskManager } from '@/hooks/use-task-manager';
+import { useViewPersistence } from '@/hooks/use-view-persistence';
+import { type WeekDay, getSprintRange } from '@/lib/time-utils';
+import { dashboardViewAtom } from '@/store/view-state-atoms';
 
 import { ActivityList } from './components/activity-list';
 import { MetricsCards } from './components/metrics-cards';
-import { type DashboardFilter, type WeekDay, useDashboardStats } from './hooks/use-dashboard-stats';
+import { useDashboardStats } from './hooks/use-dashboard-stats';
 
 const DAYS_OPTIONS = [
   { value: '0', label: 'Dom' },
@@ -29,87 +40,176 @@ const DAYS_OPTIONS = [
 
 export default function DashboardView() {
   const { tasks } = useTaskManager();
-  const [filter, setFilter] = useState<DashboardFilter>('sprint');
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
 
-  const [sprintConfig, setSprintConfig] = useState<{
-    startDay: WeekDay;
-    endDay: WeekDay;
-    offset: number;
-  }>({
-    startDay: 1,
-    endDay: 5,
-    offset: 0,
-  });
+  const search = useSearch({ from: '/dashboard/' });
+  const navigate = useNavigate({ from: '/dashboard' });
 
-  const { stats, activities, periodLabel } = useDashboardStats(
-    tasks,
-    filter,
-    selectedDate,
-    sprintConfig
-  );
+  useViewPersistence(search, dashboardViewAtom);
 
-  const handleSprintNavigate = (direction: 'prev' | 'next') => {
-    setSprintConfig((prev) => ({
-      ...prev,
-      offset: prev.offset + (direction === 'next' ? 1 : -1),
-    }));
+  const updateSearch = (newParams: Partial<typeof search>) => {
+    navigate({
+      search: (prev) => ({ ...prev, ...newParams }),
+      replace: true,
+    });
   };
 
-  const formatDate = (date: Date) => {
+  const filter = search.filter ?? 'sprint';
+  const selectedDate = search.date ?? new Date().toISOString().split('T')[0];
+
+  const sprintConfig = useMemo(
+    () => ({
+      startDay: (search.startDay ?? 1) as WeekDay,
+      endDay: (search.endDay ?? 5) as WeekDay,
+      offset: search.sprintOffset ?? 0,
+    }),
+    [search.startDay, search.endDay, search.sprintOffset]
+  );
+
+  const { stats, activities } = useDashboardStats(tasks, filter, selectedDate, sprintConfig);
+  const monthOptions = useMemo(() => {
+    const activeMonths = new Set<string>();
+
+    tasks.forEach((task) => {
+      if (task.intervals.length === 0) {
+        const created = new Date(task.createdAt);
+        const key = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, '0')}`;
+        activeMonths.add(key);
+        return;
+      }
+
+      task.intervals.forEach((interval) => {
+        const start = new Date(interval.start);
+
+        const end = interval.end ? new Date(interval.end) : new Date();
+
+        const current = new Date(start.getFullYear(), start.getMonth(), 1);
+        const endDate = new Date(end.getFullYear(), end.getMonth(), 1);
+
+        while (current <= endDate) {
+          const key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+          activeMonths.add(key);
+
+          current.setMonth(current.getMonth() + 1);
+        }
+      });
+    });
+
+    const sortedMonths = Array.from(activeMonths).sort().reverse();
+
+    if (sortedMonths.length === 0) {
+      const now = new Date();
+      sortedMonths.push(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
+    }
+
+    return sortedMonths.map((key) => {
+      const [year, month] = key.split('-').map(Number);
+      const date = new Date(year, month - 1, 1);
+
+      const label = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(
+        date
+      );
+
+      return {
+        value: `${key}-01`,
+        label: label.charAt(0).toUpperCase() + label.slice(1),
+      };
+    });
+  }, [tasks]);
+
+  const handleSprintNavigate = (direction: 'prev' | 'next') => {
+    updateSearch({
+      sprintOffset: sprintConfig.offset + (direction === 'next' ? 1 : -1),
+    });
+  };
+
+  const formatDateDisplay = (date: Date) => {
     return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(date);
   };
 
+  const currentSprintRange = getSprintRange(sprintConfig);
+  const currentMonthValue = useMemo(() => {
+    const [y, m] = selectedDate.split('-');
+    return `${y}-${m}-01`;
+  }, [selectedDate]);
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 ">
-      {/* Header Responsivo */}
-      <div className="flex flex-col xl:flex-row justify-between items-end xl:items-center gap-4 bg-slate-900/50 p-3 rounded-lg border border-slate-800 transition-all duration-1500 ease-in-out min-h-25 ">
-        {/* Controles de Esquerda */}
-        <div className="flex items-center gap-4 w-full xl:w-auto overflow-x-auto pb-1 xl:pb-0">
-          {/* Seletor de Data Única */}
+    <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500 py-6 px-4 sm:px-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
+            <LayoutDashboard className="text-blue-500" /> Dashboard
+          </h2>
+          <p className="text-sm text-slate-500 mt-1">
+            Visão geral de produtividade, métricas e entregas.
+          </p>
+        </div>
+      </div>
+
+      <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-2 flex flex-col lg:flex-row gap-4 items-center shadow-sm">
+        <div className="bg-slate-950 p-1 rounded-lg border border-slate-800/50 flex shrink-0 w-full lg:w-auto">
+          {(['sprint', 'day', 'month'] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => {
+                const today = new Date();
+                const defaultDate =
+                  f === 'month'
+                    ? new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0]
+                    : new Date().toISOString().split('T')[0];
+
+                updateSearch({
+                  filter: f,
+                  date: defaultDate,
+                  ...(f === 'sprint' ? { sprintOffset: 0 } : {}),
+                });
+              }}
+              className={`
+                  flex-1 lg:flex-none px-4 py-1.5 text-[11px] uppercase font-bold rounded-md transition-all duration-200
+                  ${
+                    filter === f
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
+                      : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'
+                  }
+                `}
+            >
+              {f === 'day' ? 'Dia' : f === 'sprint' ? 'Sprint' : 'Mês'}
+            </button>
+          ))}
+        </div>
+
+        <div className="hidden lg:block w-px h-8 bg-slate-800 mx-2" />
+
+        <div className="flex-1 w-full lg:w-auto flex justify-center lg:justify-start">
           {filter === 'day' && (
-            <div className="relative animate-in fade-in duration-300">
-              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-500">
-                <CalendarIcon className="h-3.5 w-3.5" />
-              </div>
+            <div className="relative w-full lg:max-w-[200px] animate-in zoom-in-95 duration-200">
+              <CalendarIcon className="absolute left-3 top-2.5 h-4 w-4 text-slate-500 pointer-events-none" />
               <Input
                 type="date"
                 value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="pl-8 h-9 bg-slate-950 border-slate-700 w-[150px] text-xs"
+                onChange={(e) => updateSearch({ date: e.target.value })}
+                className="pl-9 bg-slate-950 border-slate-700 h-9 text-sm w-full"
               />
             </div>
           )}
 
-          {/* Controles de Sprint */}
           {filter === 'sprint' && (
-            <div className="flex items-center gap-2 bg-slate-950/50 p-1.5 rounded-md border border-slate-800 animate-in fade-in duration-300">
-              {/* Navegação */}
-              <div className="flex items-center">
+            <div className="flex flex-wrap items-center gap-2 animate-in zoom-in-95 duration-200 w-full lg:w-auto justify-center lg:justify-start">
+              <div className="flex items-center bg-slate-950 rounded-md border border-slate-800 p-0.5">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-slate-400 hover:text-white"
+                  className="h-8 w-8 rounded hover:bg-slate-900"
                   onClick={() => handleSprintNavigate('prev')}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-
-                <div className="flex flex-col items-center min-w-[120px] px-2">
-                  <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">
-                    {sprintConfig.offset === 0
-                      ? 'Sprint Atual'
-                      : `Sprint ${sprintConfig.offset > 0 ? '+' : ''}${sprintConfig.offset}`}
-                  </span>
-                  <span className="text-xs text-slate-200 font-mono font-medium">
-                    {formatDate(periodLabel.start)} - {formatDate(periodLabel.end)}
-                  </span>
-                </div>
-
+                <span className="px-3 text-xs font-mono text-slate-300 min-w-[100px] text-center">
+                  {formatDateDisplay(currentSprintRange.start)} -{' '}
+                  {formatDateDisplay(currentSprintRange.end)}
+                </span>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-slate-400 hover:text-white"
+                  className="h-8 w-8 rounded hover:bg-slate-900"
                   onClick={() => handleSprintNavigate('next')}
                   disabled={sprintConfig.offset >= 0}
                 >
@@ -117,76 +217,63 @@ export default function DashboardView() {
                 </Button>
               </div>
 
-              <div className="h-5 w-px bg-slate-800 mx-1" />
+              <div className="flex items-center gap-1 bg-slate-950 rounded-md border border-slate-800 p-1 px-2 h-9">
+                <span className="text-[10px] uppercase font-bold text-slate-500 mr-1">Ciclo:</span>
+                <Select
+                  value={String(sprintConfig.startDay)}
+                  onValueChange={(v) => updateSearch({ startDay: Number(v) })}
+                >
+                  <SelectTrigger className="h-6 w-[50px] text-xs bg-transparent border-none p-0 focus:ring-0 text-blue-400 font-bold">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DAYS_OPTIONS.map((d) => (
+                      <SelectItem key={`start-${d.value}`} value={d.value}>
+                        {d.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              {/* Configuração DE -> ATÉ */}
-              <div className="flex items-center gap-1">
-                <div className="flex items-center bg-slate-900 rounded border border-slate-800 gap-2 p-1 ">
-                  <span className="text-[10px] text-slate-500  font-bold">DE</span>
-                  <Select
-                    value={String(sprintConfig.startDay)}
-                    onValueChange={(v) =>
-                      setSprintConfig((p) => ({ ...p, startDay: Number(v) as WeekDay }))
-                    }
-                  >
-                    <SelectTrigger className="h-6  text-[10px] bg-transparent border-none focus:ring-0  text-slate-300">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DAYS_OPTIONS.map((d) => (
-                        <SelectItem key={`start-${d.value}`} value={d.value}>
-                          {d.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <ArrowRight className="w-3 h-3 text-slate-600" />
 
-                <ArrowRight className="h-3 w-3 text-slate-600" />
-
-                <div className="flex items-center bg-slate-900 rounded border border-slate-800 gap-2 p-1">
-                  <span className="text-[10px] text-slate-500 gap-2 p-1 font-bold">ATÉ</span>
-                  <Select
-                    value={String(sprintConfig.endDay)}
-                    onValueChange={(v) =>
-                      setSprintConfig((p) => ({ ...p, endDay: Number(v) as WeekDay }))
-                    }
-                  >
-                    <SelectTrigger className="h-6 w-[55px] text-[10px] bg-transparent border-none focus:ring-0 gap-2 p-1 text-slate-300">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DAYS_OPTIONS.map((d) => (
-                        <SelectItem key={`end-${d.value}`} value={d.value}>
-                          {d.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Select
+                  value={String(sprintConfig.endDay)}
+                  onValueChange={(v) => updateSearch({ endDay: Number(v) })}
+                >
+                  <SelectTrigger className="h-6 w-[50px] text-xs bg-transparent border-none p-0 focus:ring-0 text-blue-400 font-bold">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DAYS_OPTIONS.map((d) => (
+                      <SelectItem key={`end-${d.value}`} value={d.value}>
+                        {d.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           )}
-        </div>
-
-        {/* Toggle de Tipo */}
-        <div className="flex gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 shrink-0">
-          {(['day', 'sprint', 'month'] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => {
-                setFilter(f);
-                if (f === 'sprint') setSprintConfig((prev) => ({ ...prev, offset: 0 }));
-              }}
-              className={`px-4 py-1.5 text-xs rounded-md uppercase font-bold transition-all ${
-                filter === f
-                  ? 'bg-slate-800 text-blue-400 shadow-sm border border-slate-700'
-                  : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'
-              }`}
-            >
-              {f === 'day' ? 'Dia' : f === 'sprint' ? 'Sprint' : 'Mês'}
-            </button>
-          ))}
+          {filter === 'month' && (
+            <div className="flex items-center gap-2 animate-in zoom-in-95 duration-200 w-full lg:w-auto">
+              <Select value={currentMonthValue} onValueChange={(v) => updateSearch({ date: v })}>
+                <SelectTrigger className="w-full lg:w-[240px] bg-slate-950 border-slate-700 h-9 text-sm focus:ring-0">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4 text-slate-500" />
+                    <SelectValue placeholder="Selecione o mês" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {monthOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </div>
 

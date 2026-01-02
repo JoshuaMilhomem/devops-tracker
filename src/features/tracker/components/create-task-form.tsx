@@ -102,7 +102,6 @@ export function CreateTaskForm({ onCreate, availableTags }: CreateTaskFormProps)
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Inputs Básicos */}
         <div>
           <Input
             placeholder="Nome da Atividade"
@@ -120,9 +119,7 @@ export function CreateTaskForm({ onCreate, availableTags }: CreateTaskFormProps)
           />
         </div>
 
-        {/* --- COMBOBOX DE TAGS --- */}
         <div className="space-y-2">
-          {/* Lista de Tags Selecionadas */}
           <div className="flex flex-wrap gap-2 min-h-[32px]">
             {tags.map((tag) => (
               <Badge
@@ -203,7 +200,6 @@ export function CreateTaskForm({ onCreate, availableTags }: CreateTaskFormProps)
                       ))}
                     </CommandGroup>
 
-                    {/* Atalho de criação mesmo se houver resultados, se o input não estiver vazio */}
                     {inputValue &&
                       !selectableTags.some(
                         (t) => t.label.toLowerCase() === inputValue.toLowerCase()
@@ -270,7 +266,6 @@ export function CreateTaskForm({ onCreate, availableTags }: CreateTaskFormProps)
           </Popover>
         </div>
 
-        {/* Footer do Form */}
         <div className="pt-2">
           <Button
             onClick={handleSubmit}

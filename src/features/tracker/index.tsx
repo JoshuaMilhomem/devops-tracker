@@ -87,12 +87,10 @@ export default function TrackerView() {
 
   return (
     <div className="grid gap-6 lg:gap-8 lg:grid-cols-[350px_1fr] w-full max-w-[100vw] overflow-x-hidden pb-20 lg:pb-0">
-      {/* Coluna 1: Formulário */}
       <div className="space-y-6 w-full">
         <CreateTaskForm onCreate={createTask} availableTags={availableTags} />
       </div>
 
-      {/* Coluna 2: Lista */}
       {/* [FIX] Adicionado 'min-w-0' aqui. Isso é crucial em CSS Grid/Flex. 
           Sem isso, se o conteúdo interno for largo, ele empurra o grid. 
           Com min-w-0, ele força o conteúdo a respeitar o truncate. */}
@@ -128,7 +126,6 @@ export default function TrackerView() {
           ))}
         </div>
 
-        {/* Spacer para garantir scroll se o Hero Global for fixo no bottom */}
         {activeTask && <div className="h-32 w-full" aria-hidden="true" />}
       </div>
 

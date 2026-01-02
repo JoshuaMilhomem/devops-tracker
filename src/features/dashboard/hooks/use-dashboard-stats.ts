@@ -47,20 +47,21 @@ export function useDashboardStats(
       rangeStart = new Date(year, month - 1, day);
       rangeEnd = new Date(year, month - 1, day + 1);
     } else if (filter === 'month') {
-      rangeStart = new Date(today.getFullYear(), today.getMonth(), 1);
-      rangeEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      const [year, month] = selectedDate.split('-').map(Number);
+
+      rangeStart = new Date(year, month - 1, 1);
+
+      rangeEnd = new Date(year, month, 0);
+
+      rangeEnd.setHours(23, 59, 59, 999);
     } else {
       const currentSprintStart = getSprintStart(today, sprintConfig.startDay);
 
       rangeStart = new Date(currentSprintStart);
       rangeStart.setDate(rangeStart.getDate() + sprintConfig.offset * 7);
-
       rangeEnd = new Date(rangeStart);
-
       const durationDays = (sprintConfig.endDay - sprintConfig.startDay + 7) % 7;
-
       rangeEnd.setDate(rangeEnd.getDate() + durationDays);
-
       rangeEnd.setDate(rangeEnd.getDate() + 1);
       rangeEnd.setHours(0, 0, 0, 0);
     }

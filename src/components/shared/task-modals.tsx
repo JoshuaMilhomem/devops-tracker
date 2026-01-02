@@ -161,7 +161,6 @@ export const EditTaskModal = ({
             />
           </div>
 
-          {/* --- TAG SELECTOR --- */}
           <div className="grid gap-2">
             <Label>Tags</Label>
             <div className="flex flex-wrap gap-2 mb-2">

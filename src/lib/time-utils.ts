@@ -49,3 +49,34 @@ export function calculateStoryPoints(ms: number): number {
   if (hours < 24) return 8;
   return 13;
 }
+export type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+interface SprintConfig {
+  startDay: WeekDay;
+  endDay: WeekDay;
+  offset: number;
+}
+
+export const getSprintRange = (config: SprintConfig) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const currentSprintStart = new Date(today);
+  const currentDay = currentSprintStart.getDay();
+  const diff = (currentDay - config.startDay + 7) % 7;
+  currentSprintStart.setDate(currentSprintStart.getDate() - diff);
+
+  const start = new Date(currentSprintStart);
+  start.setDate(start.getDate() + config.offset * 7);
+
+  const end = new Date(start);
+  const durationDays = (config.endDay - config.startDay + 7) % 7;
+  end.setDate(end.getDate() + durationDays);
+
+  end.setHours(23, 59, 59, 999);
+
+  return { start, end };
+};
+
+export const formatDateParam = (date: Date) => date.toISOString().split('T')[0];
+export const parseDateParam = (str?: string) => (str ? new Date(str + 'T00:00:00') : new Date());

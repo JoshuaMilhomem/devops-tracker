@@ -102,7 +102,6 @@ export function HeroContent({
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          {/* LÓGICA DE BOTÕES MINIMIZADOS */}
           {isRunning ? (
             <Button
               size="icon"
@@ -125,7 +124,6 @@ export function HeroContent({
                 <Play size={18} className="ml-0.5" />
               </Button>
 
-              {/* Botão Fechar só aparece se pausado */}
               <Button
                 size="icon"
                 variant="ghost"
@@ -138,7 +136,6 @@ export function HeroContent({
             </>
           )}
 
-          {/* O botão concluir sempre disponível */}
           <Button
             size="icon"
             variant="ghost"
@@ -214,7 +211,6 @@ export function HeroContent({
           </div>
 
           <div className="flex gap-1">
-            {/* Se estiver pausado, mostra botão fechar no topo também */}
             {!isRunning && (
               <Button
                 size="icon"
@@ -245,12 +241,10 @@ export function HeroContent({
             {formatTime(elapsed)}
           </div>
           <div className="text-xs sm:text-sm text-slate-400 font-mono mt-1 flex items-center gap-3 justify-center sm:justify-start">
-            {/* Work Units */}
             <span>
               <span className="text-blue-400 font-bold">{calculateWorkUnits(elapsed)}</span> WT
             </span>
             <span className="text-slate-600">|</span>
-            {/* Story Points Dinâmicos */}
             <span>
               <span className="text-purple-400 font-bold">{currentSp}</span> SP
             </span>

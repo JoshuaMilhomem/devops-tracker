@@ -1,8 +1,8 @@
 import {
   CalendarDays,
+  CalendarRange,
   CheckCircle2,
   Circle,
-  Clock,
   Copy,
   List,
   PauseCircle,
@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useWorkUnitFormatter } from '@/hooks/use-work-units-formatter';
 import {
   calculateStoryPoints,
   calculateTotalMs,
@@ -31,14 +32,36 @@ interface HistoryItemProps {
   onReopen: (id: string) => void;
   onDelete: (id: string) => void;
 }
+const getTaskDateRange = (task: Task): string => {
+  if (!task.intervals || task.intervals.length === 0) {
+    return `Criada em ${new Date(task.createdAt).toLocaleDateString()}`;
+  }
 
+  const timestamps = task.intervals.flatMap((i) => {
+    const start = new Date(i.start).getTime();
+    const end = i.end ? new Date(i.end).getTime() : Date.now();
+    return [start, end];
+  });
+
+  const minTime = Math.min(...timestamps);
+  const maxTime = Math.max(...timestamps);
+
+  const startDate = new Date(minTime);
+  const endDate = new Date(maxTime);
+
+  if (startDate.toDateString() === endDate.toDateString()) {
+    return startDate.toLocaleDateString();
+  }
+
+  return `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
+};
 export function HistoryItem({ task, onEdit, onLog, onReopen, onDelete }: HistoryItemProps) {
   const totalMs = calculateTotalMs(task.intervals);
   const dynamicSp = calculateStoryPoints(totalMs);
+  const dateRangeLabel = getTaskDateRange(task);
 
   const isCompleted = task.status === 'completed';
   const isPaused = task.status === 'paused';
-
   const statusColor = isCompleted
     ? 'text-emerald-500'
     : isPaused
@@ -47,19 +70,19 @@ export function HistoryItem({ task, onEdit, onLog, onReopen, onDelete }: History
 
   const StatusIcon = isCompleted ? CheckCircle2 : isPaused ? PauseCircle : Circle;
 
-  const copyWorkUnitsToClipboard = () => {
-    const workUnits = calculateWorkUnits(totalMs).toString();
-    navigator.clipboard.writeText(workUnits);
-    toast.info(`Work Units (${workUnits}) copiado para a área de transferência!`);
-  };
+  const { format: formatWT } = useWorkUnitFormatter();
 
+  const copyWorkUnitsToClipboard = () => {
+    const formattedValue = formatWT(totalMs);
+    navigator.clipboard.writeText(formattedValue);
+    toast.info(`Work Units (${formattedValue}) copiado!`);
+  };
   return (
     <Card
       className={`group flex flex-col p-5 border-slate-800 transition-colors gap-4 ${isCompleted ? 'bg-slate-900/20 hover:bg-slate-900/40' : 'bg-slate-900/40 hover:bg-slate-900/60'}`}
     >
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div className="flex-1 space-y-2">
-          {/* Header com Status, Nome e SP */}
           <div className="flex items-center gap-2 flex-wrap">
             <TooltipProvider>
               <Tooltip>
@@ -88,7 +111,6 @@ export function HistoryItem({ task, onEdit, onLog, onReopen, onDelete }: History
             )}
           </div>
 
-          {/* Renderização de TAGS [NEW] */}
           {task.tags && task.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {task.tags.map((tag) => (
@@ -116,20 +138,15 @@ export function HistoryItem({ task, onEdit, onLog, onReopen, onDelete }: History
               </span>
             </div>
 
-            {/* Mostra data de conclusão OU data de criação */}
             <span>•</span>
-            <div className="flex items-center gap-1">
-              <Clock size={12} />
-              <span>
-                {isCompleted && task.completedAt
-                  ? `Finalizada em ${new Date(task.completedAt).toLocaleDateString()}`
-                  : `Criada em ${new Date(task.createdAt || new Date().getTime()).toLocaleDateString()}`}
-              </span>
+
+            <div className="flex items-center gap-1 text-slate-400">
+              <CalendarRange size={12} className="text-blue-500/70" />
+              <span className="font-mono">{dateRangeLabel}</span>
             </div>
           </div>
         </div>
 
-        {/* Métricas (Direita) */}
         <div className="flex sm:flex-col items-center sm:items-end gap-4 sm:gap-1 bg-slate-950/50 p-3 rounded-lg border border-slate-800/50 min-w-[120px]">
           <div className="text-right">
             <div className="text-slate-200 font-mono text-lg font-medium">
@@ -191,7 +208,6 @@ export function HistoryItem({ task, onEdit, onLog, onReopen, onDelete }: History
 
           <div className="w-px h-4 bg-slate-800 mx-1"></div>
 
-          {/* Botão Reabrir só faz sentido se estiver concluída */}
           {isCompleted && (
             <Tooltip>
               <TooltipTrigger asChild>
