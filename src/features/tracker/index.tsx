@@ -91,9 +91,6 @@ export default function TrackerView() {
         <CreateTaskForm onCreate={createTask} availableTags={availableTags} />
       </div>
 
-      {/* [FIX] Adicionado 'min-w-0' aqui. Isso é crucial em CSS Grid/Flex. 
-          Sem isso, se o conteúdo interno for largo, ele empurra o grid. 
-          Com min-w-0, ele força o conteúdo a respeitar o truncate. */}
       <div className="space-y-4 w-full min-w-0">
         <div className="flex items-center justify-between pb-2 border-b border-slate-800">
           <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">

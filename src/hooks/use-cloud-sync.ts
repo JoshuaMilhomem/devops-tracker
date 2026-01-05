@@ -142,6 +142,33 @@ export function useCloudSync(userId?: string) {
       setIsSyncing(false);
     }
   });
+  const clearCloudData = useAtomCallback(async (_get, _set) => {
+    if (!userId) return;
+    setIsSyncing(true);
 
-  return { isSyncing, backup, restore, smartMerge };
+    try {
+      const batch = writeBatch(db);
+
+      const q = query(collection(db, 'users', userId, 'tasks'));
+      const snapshot = await getDocs(q);
+
+      snapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+
+      const userRef = doc(db, 'users', userId);
+      batch.delete(userRef);
+
+      await batch.commit();
+
+      toast.success('Dados excluídos da nuvem com sucesso.');
+    } catch (error) {
+      console.error('Erro ao excluir dados:', error);
+      toast.error('Falha ao excluir dados da nuvem.');
+    } finally {
+      setIsSyncing(false);
+    }
+  });
+
+  return { isSyncing, backup, restore, smartMerge, clearCloudData };
 }

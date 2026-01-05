@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PrivacyIndexRouteImport } from './routes/privacy/index'
 import { Route as HistoryIndexRouteImport } from './routes/history/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as TrackerIndexRouteImport } from './routes/_tracker/index'
 
+const PrivacyIndexRoute = PrivacyIndexRouteImport.update({
+  id: '/privacy/',
+  path: '/privacy/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HistoryIndexRoute = HistoryIndexRouteImport.update({
   id: '/history/',
   path: '/history/',
@@ -33,34 +39,45 @@ export interface FileRoutesByFullPath {
   '/': typeof TrackerIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/history': typeof HistoryIndexRoute
+  '/privacy': typeof PrivacyIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof TrackerIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/history': typeof HistoryIndexRoute
+  '/privacy': typeof PrivacyIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_tracker/': typeof TrackerIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/history/': typeof HistoryIndexRoute
+  '/privacy/': typeof PrivacyIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/history'
+  fullPaths: '/' | '/dashboard' | '/history' | '/privacy'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/history'
-  id: '__root__' | '/_tracker/' | '/dashboard/' | '/history/'
+  to: '/' | '/dashboard' | '/history' | '/privacy'
+  id: '__root__' | '/_tracker/' | '/dashboard/' | '/history/' | '/privacy/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   TrackerIndexRoute: typeof TrackerIndexRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
   HistoryIndexRoute: typeof HistoryIndexRoute
+  PrivacyIndexRoute: typeof PrivacyIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/privacy/': {
+      id: '/privacy/'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/history/': {
       id: '/history/'
       path: '/history'
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrackerIndexRoute: TrackerIndexRoute,
   DashboardIndexRoute: DashboardIndexRoute,
   HistoryIndexRoute: HistoryIndexRoute,
+  PrivacyIndexRoute: PrivacyIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
